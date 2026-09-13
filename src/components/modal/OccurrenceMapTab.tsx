@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Globe, Loader2, Info } from 'lucide-react';
+import { MapPin, Globe, Loader2 } from 'lucide-react';
 import { fetchGBIFCoordinates } from '../../services/api/gbifService';
+import type { Creature, CreatureCoordinate } from '../../types/creature';
 
-export function OccurrenceMapTab({ creature }) {
-  const [coordinates, setCoordinates] = useState(creature.coordinates || []);
+interface OccurrenceMapTabProps {
+  creature: Creature;
+}
+
+export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
+  const [coordinates, setCoordinates] = useState<CreatureCoordinate[]>(creature.coordinates || []);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPoint, setSelectedPoint] = useState(null);
-  const [hoveredPoint, setHoveredPoint] = useState(null);
-  const canvasRef = useRef(null);
+  const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Fetch live GBIF coordinates if creature doesn't have many
   useEffect(() => {
@@ -46,6 +51,7 @@ export function OccurrenceMapTab({ creature }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     const width = canvas.width;
     const height = canvas.height;
 
@@ -111,7 +117,7 @@ export function OccurrenceMapTab({ creature }) {
     });
   }, [coordinates, hoveredPoint, selectedPoint]);
 
-  const handleCanvasMouseMove = (e) => {
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -120,7 +126,7 @@ export function OccurrenceMapTab({ creature }) {
     const mouseX = (e.clientX - rect.left) * scaleX;
     const mouseY = (e.clientY - rect.top) * scaleY;
 
-    let foundIdx = null;
+    let foundIdx: number | null = null;
     coordinates.forEach((pt, idx) => {
       const x = ((pt.lng + 180) / 360) * canvas.width;
       const y = ((90 - pt.lat) / 180) * canvas.height;
@@ -186,7 +192,9 @@ export function OccurrenceMapTab({ creature }) {
         />
 
         {/* Hovered / Selected Tooltip Overlay */}
-        {(hoveredPoint !== null || selectedPoint !== null) && (
+        {(hoveredPoint !== null || selectedPoint !== null) && (() => {
+          const activePoint = (hoveredPoint ?? selectedPoint)!;
+          return (
           <div style={{
             position: 'absolute',
             bottom: '16px',
@@ -206,14 +214,15 @@ export function OccurrenceMapTab({ creature }) {
             <MapPin size={16} style={{ color: 'var(--accent-primary)' }} />
             <div>
               <div style={{ fontWeight: 700 }}>
-                {coordinates[hoveredPoint ?? selectedPoint]?.country || 'Geographic Specimen Site'}
+                {coordinates[activePoint]?.country || 'Geographic Specimen Site'}
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
-                Lat: {coordinates[hoveredPoint ?? selectedPoint]?.lat.toFixed(2)}°, Lng: {coordinates[hoveredPoint ?? selectedPoint]?.lng.toFixed(2)}°
+                Lat: {coordinates[activePoint]?.lat.toFixed(2)}°, Lng: {coordinates[activePoint]?.lng.toFixed(2)}°
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* List of Coordinate Occurrences */}

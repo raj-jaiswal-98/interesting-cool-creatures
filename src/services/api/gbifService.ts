@@ -3,7 +3,9 @@
  * Fetches real-world geographic occurrence coordinates from the Global Biodiversity Information Facility.
  */
 
-export async function fetchGBIFCoordinates(scientificName, limit = 15) {
+import type { CreatureCoordinate } from '../../types/creature';
+
+export async function fetchGBIFCoordinates(scientificName?: string, limit = 15): Promise<CreatureCoordinate[]> {
   if (!scientificName) return [];
 
   try {
@@ -15,10 +17,10 @@ export async function fetchGBIFCoordinates(scientificName, limit = 15) {
       throw new Error(`GBIF API responded with status ${res.status}`);
     }
     const data = await res.json();
-    
+
     return (data.results || [])
-      .filter(item => item.decimalLatitude != null && item.decimalLongitude != null)
-      .map(item => ({
+      .filter((item: any) => item.decimalLatitude != null && item.decimalLongitude != null)
+      .map((item: any) => ({
         lat: Number(item.decimalLatitude.toFixed(3)),
         lng: Number(item.decimalLongitude.toFixed(3)),
         country: item.country || item.continent || 'International Waters',
@@ -26,7 +28,7 @@ export async function fetchGBIFCoordinates(scientificName, limit = 15) {
         basisOfRecord: item.basisOfRecord || 'PRESERVED_SPECIMEN'
       }));
   } catch (err) {
-    console.warn(`GBIF coordinate fetch failed for "${scientificName}":`, err.message);
+    console.warn(`GBIF coordinate fetch failed for "${scientificName}":`, (err as Error).message);
     return [];
   }
 }

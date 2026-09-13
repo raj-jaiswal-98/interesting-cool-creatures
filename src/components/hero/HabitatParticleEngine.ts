@@ -1,5 +1,4 @@
 /**
- * HabitatParticleEngine
  * High performance HTML5 Canvas 2D particle simulation.
  * Renders atmospheric environmental effects reflecting creature biomes:
  * - marine: bioluminescent rising orbs & plankton drift
@@ -9,12 +8,27 @@
  * - aerial: swift horizontal wind streaks
  */
 
+import type { HabitatType } from '../../types/creature';
+
 class Particle {
-  constructor(width, height, habitat = 'marine') {
+  habitat!: HabitatType;
+  width!: number;
+  height!: number;
+  x!: number;
+  y!: number;
+  size!: number;
+  opacity!: number;
+  baseOpacity!: number;
+  pulse!: number;
+  pulseSpeed!: number;
+  vx!: number;
+  vy!: number;
+
+  constructor(width: number, height: number, habitat: HabitatType = 'marine') {
     this.reset(width, height, habitat, true);
   }
 
-  reset(width, height, habitat, initial = false) {
+  reset(width: number, height: number, habitat: HabitatType, initial = false): void {
     this.habitat = habitat;
     this.width = width;
     this.height = height;
@@ -42,7 +56,6 @@ class Particle {
     this.pulse = Math.random() * Math.PI * 2;
     this.pulseSpeed = 0.02 + Math.random() * 0.03;
 
-    // Habitat specific physics velocities
     switch (habitat) {
       case 'volcanic':
         this.vx = (Math.random() - 0.5) * 1.2;
@@ -72,19 +85,18 @@ class Particle {
     }
   }
 
-  update(width, height) {
+  update(width: number, height: number): void {
     this.x += this.vx;
     this.y += this.vy;
     this.pulse += this.pulseSpeed;
     this.opacity = this.baseOpacity + Math.sin(this.pulse) * 0.15;
 
-    // Wrap around or reset
     if (this.y < -20 || this.y > height + 20 || this.x < -20 || this.x > width + 20) {
       this.reset(width, height, this.habitat, false);
     }
   }
 
-  draw(ctx, primaryColor) {
+  draw(ctx: CanvasRenderingContext2D, primaryColor: string): void {
     ctx.save();
     ctx.globalAlpha = Math.max(0.05, Math.min(1, this.opacity));
     ctx.fillStyle = primaryColor;
@@ -99,7 +111,23 @@ class Particle {
 }
 
 export class HabitatParticleEngine {
-  constructor(canvas, habitat = 'marine', primaryColor = '#00F0FF', glowColor = 'rgba(0, 240, 255, 0.25)') {
+  canvas: HTMLCanvasElement | null;
+  ctx: CanvasRenderingContext2D | null;
+  habitat: HabitatType;
+  primaryColor: string;
+  glowColor: string;
+  particles: Particle[];
+  animationFrameId: number | null;
+  isRunning: boolean;
+  logicalWidth?: number;
+  logicalHeight?: number;
+
+  constructor(
+    canvas: HTMLCanvasElement,
+    habitat: HabitatType = 'marine',
+    primaryColor = '#00F0FF',
+    glowColor = 'rgba(0, 240, 255, 0.25)'
+  ) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.habitat = habitat;
@@ -112,16 +140,16 @@ export class HabitatParticleEngine {
     this.init();
   }
 
-  init() {
+  init(): void {
     this.resize();
-    const count = Math.min(80, Math.floor((this.canvas.width * this.canvas.height) / 14000));
+    const count = Math.min(80, Math.floor((this.canvas!.width * this.canvas!.height) / 14000));
     this.particles = [];
     for (let i = 0; i < count; i++) {
-      this.particles.push(new Particle(this.canvas.width, this.canvas.height, this.habitat));
+      this.particles.push(new Particle(this.canvas!.width, this.canvas!.height, this.habitat));
     }
   }
 
-  resize() {
+  resize(): void {
     if (!this.canvas) return;
     const rect = this.canvas.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -134,7 +162,7 @@ export class HabitatParticleEngine {
     this.logicalHeight = rect.height;
   }
 
-  setHabitat(habitat, primaryColor, glowColor) {
+  setHabitat(habitat: HabitatType, primaryColor?: string, glowColor?: string): void {
     this.habitat = habitat || 'marine';
     if (primaryColor) this.primaryColor = primaryColor;
     if (glowColor) this.glowColor = glowColor;
@@ -143,12 +171,12 @@ export class HabitatParticleEngine {
     this.particles.forEach(p => p.reset(this.logicalWidth || 800, this.logicalHeight || 600, this.habitat, true));
   }
 
-  start() {
+  start(): void {
     if (this.isRunning) return;
     this.isRunning = true;
 
     const render = () => {
-      if (!this.isRunning) return;
+      if (!this.isRunning || !this.ctx) return;
       const width = this.logicalWidth || 800;
       const height = this.logicalHeight || 600;
 
@@ -164,7 +192,6 @@ export class HabitatParticleEngine {
       this.ctx.fillStyle = gradient;
       this.ctx.fillRect(0, 0, width, height);
 
-      // Update and draw particles
       for (let i = 0; i < this.particles.length; i++) {
         const p = this.particles[i];
         p.update(width, height);
@@ -177,7 +204,7 @@ export class HabitatParticleEngine {
     render();
   }
 
-  stop() {
+  stop(): void {
     this.isRunning = false;
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
@@ -185,7 +212,7 @@ export class HabitatParticleEngine {
     }
   }
 
-  destroy() {
+  destroy(): void {
     this.stop();
     this.particles = [];
     this.ctx = null;

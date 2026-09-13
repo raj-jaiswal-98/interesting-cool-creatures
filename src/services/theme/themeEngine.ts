@@ -1,10 +1,14 @@
 import ColorThief from 'colorthief';
+import type { ThemePalette } from '../../types/creature';
 
 /**
  * ThemeEngine extracts vibrant colors from creature photography,
  * computes harmonious contrast hexes, and dynamically updates CSS custom properties on :root.
  */
 class ThemeEngine {
+  defaultPalette: ThemePalette;
+  currentPalette: ThemePalette;
+
   constructor() {
     this.defaultPalette = {
       primary: '#00F0FF',
@@ -19,14 +23,14 @@ class ThemeEngine {
   /**
    * Helper to convert RGB to Hex string
    */
-  rgbToHex(r, g, b) {
+  rgbToHex(r: number, g: number, b: number): string {
     return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
   }
 
   /**
    * Lightens or darkens a hex color by a percentage factor (-1.0 to 1.0)
    */
-  adjustBrightness(hex, factor) {
+  adjustBrightness(hex: string, factor: number): string {
     const num = parseInt(hex.replace('#', ''), 16);
     const r = Math.min(255, Math.max(0, (num >> 16) + Math.round(255 * factor)));
     const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + Math.round(255 * factor)));
@@ -36,9 +40,8 @@ class ThemeEngine {
 
   /**
    * Sets CSS variables on document.documentElement
-   * @param {Object} palette
    */
-  injectVariables(palette) {
+  injectVariables(palette: ThemePalette): void {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
     root.style.setProperty('--accent-primary', palette.primary);
@@ -51,11 +54,8 @@ class ThemeEngine {
 
   /**
    * Applies pre-calculated or extracted creature palette
-   * @param {string} imageUrl
-   * @param {Object} [fallbackPalette]
-   * @returns {Promise<Object>}
    */
-  async applyCreatureTheme(imageUrl, fallbackPalette) {
+  async applyCreatureTheme(imageUrl?: string | null, fallbackPalette?: ThemePalette): Promise<ThemePalette> {
     if (fallbackPalette) {
       this.injectVariables(fallbackPalette);
     }
@@ -69,7 +69,7 @@ class ThemeEngine {
       img.crossOrigin = 'Anonymous';
       img.src = imageUrl;
 
-      await new Promise((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         if (img.complete) return resolve();
         img.onload = () => resolve();
         img.onerror = () => reject(new Error('Image failed to load for theme extraction'));
@@ -91,7 +91,7 @@ class ThemeEngine {
       const glowRgba = `rgba(${dominant[0]}, ${dominant[1]}, ${dominant[2]}, 0.28)`;
       const surfaceRgba = `rgba(${Math.min(darkTriplet[0], 25)}, ${Math.min(darkTriplet[1], 30)}, ${Math.min(darkTriplet[2], 40)}, 0.8)`;
 
-      const newTheme = {
+      const newTheme: ThemePalette = {
         primary: primaryHex,
         darkMuted: darkHex,
         glow: glowRgba,
@@ -115,7 +115,7 @@ class ThemeEngine {
   /**
    * Reverts CSS variables to baseline default theme
    */
-  resetToDefault() {
+  resetToDefault(): void {
     this.injectVariables(this.defaultPalette);
   }
 }

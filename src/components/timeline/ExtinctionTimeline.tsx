@@ -1,6 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { TimelineNodeCard } from './TimelineNodeCard';
+import type { Creature } from '../../types/creature';
+
+type SortOption = 'chronology-asc' | 'chronology-desc' | 'danger' | 'name';
+
+interface ExtinctionTimelineProps {
+  creatures: Creature[];
+  onSelectCreature: (creature: Creature) => void;
+}
 
 const ERAS = [
   { id: 'all', label: 'All Eras' },
@@ -11,10 +19,10 @@ const ERAS = [
   { id: 'Modern', label: 'Modern Extant' }
 ];
 
-export function ExtinctionTimeline({ creatures, onSelectCreature }) {
+export function ExtinctionTimeline({ creatures, onSelectCreature }: ExtinctionTimelineProps) {
   const [selectedEra, setSelectedEra] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('chronology-asc');
+  const [sortBy, setSortBy] = useState<SortOption>('chronology-asc');
 
   const filteredCreatures = useMemo(() => {
     return creatures
@@ -124,7 +132,7 @@ export function ExtinctionTimeline({ creatures, onSelectCreature }) {
                 type="text"
                 placeholder="Search species or habitat..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 style={{
                   background: 'transparent',
                   border: 'none',
@@ -151,7 +159,7 @@ export function ExtinctionTimeline({ creatures, onSelectCreature }) {
               <SlidersHorizontal size={14} style={{ color: 'var(--text-muted)' }} />
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as SortOption)}
                 style={{
                   background: 'transparent',
                   border: 'none',

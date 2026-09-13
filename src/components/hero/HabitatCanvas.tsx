@@ -1,9 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { HabitatParticleEngine } from './HabitatParticleEngine';
+import type { HabitatType } from '../../types/creature';
 
-export function HabitatCanvas({ habitat = 'marine', primaryColor = '#00F0FF', glowColor = 'rgba(0, 240, 255, 0.25)' }) {
-  const canvasRef = useRef(null);
-  const engineRef = useRef(null);
+interface HabitatCanvasProps {
+  habitat?: HabitatType;
+  primaryColor?: string;
+  glowColor?: string;
+}
+
+export function HabitatCanvas({ habitat = 'marine', primaryColor = '#00F0FF', glowColor = 'rgba(0, 240, 255, 0.25)' }: HabitatCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const engineRef = useRef<HabitatParticleEngine | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;

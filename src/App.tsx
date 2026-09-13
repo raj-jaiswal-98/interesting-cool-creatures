@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Sparkles, Dna, Compass, Globe2, Cpu } from 'lucide-react';
+import { Dna, Globe2, Cpu } from 'lucide-react';
 import { CREATURE_CATALOG } from './data/creatureCatalog';
 import { getDailySpotlightCreature } from './utils/seedGenerator';
 import { themeEngine } from './services/theme/themeEngine';
@@ -9,6 +9,8 @@ import { SpotlightHero } from './components/hero/SpotlightHero';
 import { ExtinctionTimeline } from './components/timeline/ExtinctionTimeline';
 import { CreatureModal } from './components/modal/CreatureModal';
 import { chromeAI } from './services/ai/chromeAIService';
+import type { Creature } from './types/creature';
+import type { AIAvailabilityStatus } from './types/ai';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,11 +22,10 @@ const queryClient = new QueryClient({
 });
 
 export function AppContent() {
-  const [spotlightCreature, setSpotlightCreature] = useState(null);
-  const [selectedCreature, setSelectedCreature] = useState(null);
-  const [aiStatus, setAiStatus] = useState('checking');
+  const [spotlightCreature, setSpotlightCreature] = useState<Creature | null>(null);
+  const [selectedCreature, setSelectedCreature] = useState<Creature | null>(null);
+  const [aiStatus, setAiStatus] = useState<AIAvailabilityStatus | 'checking'>('checking');
 
-  // Initialize Daily Spotlight Creature & Theme
   useEffect(() => {
     const daily = getDailySpotlightCreature(CREATURE_CATALOG);
     setSpotlightCreature(daily);
@@ -136,13 +137,13 @@ export function AppContent() {
         {/* Spotlight Hero Section */}
         <SpotlightHero
           creature={spotlightCreature}
-          onSelectCreature={(c) => setSelectedCreature(c)}
+          onSelectCreature={(c: Creature) => setSelectedCreature(c)}
         />
 
         {/* Evolutionary Timeline & Filterable Catalog */}
         <ExtinctionTimeline
           creatures={CREATURE_CATALOG}
-          onSelectCreature={(c) => setSelectedCreature(c)}
+          onSelectCreature={(c: Creature) => setSelectedCreature(c)}
         />
       </main>
 

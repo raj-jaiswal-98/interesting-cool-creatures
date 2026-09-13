@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { chromeAI } from '../src/services/ai/chromeAIService';
 import { proceduralAI } from '../src/services/ai/proceduralSpeculationEngine';
+import type { Creature } from '../src/types/creature';
 
 describe('ChromeAIService & Procedural Fallback Engine', () => {
+  // Only the fields simulateCreatureClash actually reads are provided
   const dummyCreatureA = {
     id: 'spinosaurus',
     commonName: 'Spinosaurus',
@@ -10,7 +12,7 @@ describe('ChromeAIService & Procedural Fallback Engine', () => {
     habitat: 'Cretaceous Mangroves',
     habitatType: 'volcanic',
     stats: { weightKg: 7400, dangerLevel: 10 }
-  };
+  } as Creature;
 
   const dummyCreatureB = {
     id: 'smilodon',
@@ -19,7 +21,7 @@ describe('ChromeAIService & Procedural Fallback Engine', () => {
     habitat: 'Pleistocene Pampas',
     habitatType: 'tundra',
     stats: { weightKg: 400, dangerLevel: 9 }
-  };
+  } as Creature;
 
   it('detects AI availability or falls back to unavailable cleanly in test env', async () => {
     const status = await chromeAI.checkAvailability();

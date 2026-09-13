@@ -3,7 +3,9 @@
  * Standardized to the Creature schema outlined in ext/lld.md and ext/feature_doc_classes.md.
  */
 
-export const CREATURE_CATALOG = [
+import type { Creature } from '../types/creature';
+
+export const CREATURE_CATALOG: Creature[] = [
   {
     id: 'glaucus-atlanticus',
     commonName: 'Blue Dragon Sea Slug',

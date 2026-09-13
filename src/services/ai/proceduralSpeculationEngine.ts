@@ -1,10 +1,18 @@
 /**
- * ProceduralSpeculationEngine
- * Provides deterministic, biologically plausible generative simulation
- * when on-device Chrome Built-in AI (Gemini Nano) is unsupported or offline.
+ * Deterministic, biologically plausible generative fallback used when
+ * on-device Chrome AI (Gemini Nano) is unsupported or offline.
  */
 
+import type {
+  SpeculativeEvolutionResult,
+  CreatureClashResult,
+  StressorKey
+} from '../../types/ai';
+import type { Creature } from '../../types/creature';
+
 export class ProceduralSpeculationEngine {
+  stressors: Record<StressorKey, string>;
+
   constructor() {
     this.stressors = {
       warming: 'extreme thermal rise (+4°C global oceanic warming)',
@@ -14,13 +22,13 @@ export class ProceduralSpeculationEngine {
     };
   }
 
-  /**
-   * Generates speculative evolutionary mutations 10,000+ years in the future.
-   */
-  generateSpeculativeEvolution(creatureName, habitat, stressorKey = 'warming') {
+  generateSpeculativeEvolution(
+    creatureName: string,
+    habitat: string,
+    stressorKey: StressorKey = 'warming'
+  ): SpeculativeEvolutionResult {
     const stressDesc = this.stressors[stressorKey] || this.stressors.warming;
-    
-    // Deterministic procedural mutation matrices
+
     const adaptations = [
       {
         title: 'Thermal Dissipation & Silica Cuticle',
@@ -50,19 +58,13 @@ export class ProceduralSpeculationEngine {
     };
   }
 
-  /**
-   * Rewrites dense academic descriptions into engaging, punchy summaries.
-   */
-  translateTaxonomy(academicText, creatureName = 'This creature') {
+  translateTaxonomy(academicText?: string | null, creatureName: string = 'This creature'): string {
     if (!academicText) return 'A fascinating organism with evolutionary adaptations unique across planetary history.';
-    
+
     return `In simple terms: ${creatureName} is an evolutionary marvel! Instead of following standard biological rules, it has developed unique physiological superpowers to dominate its niche, turning extreme survival into pure art.`;
   }
 
-  /**
-   * Simulates a combat duel between two organisms.
-   */
-  simulateCreatureClash(creatureA, creatureB) {
+  simulateCreatureClash(creatureA: Creature, creatureB: Creature): CreatureClashResult {
     const weightA = creatureA.stats?.weightKg || 1;
     const weightB = creatureB.stats?.weightKg || 1;
     const dangerA = creatureA.stats?.dangerLevel || 5;
