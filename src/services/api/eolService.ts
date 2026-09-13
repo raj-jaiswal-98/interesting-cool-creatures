@@ -3,7 +3,13 @@
  * Fetches academic biological and morphological overview descriptions.
  */
 
-export async function fetchEOLTaxonomy(scientificName) {
+export interface EOLTaxonomyResult {
+  eolId: number;
+  description: string | null;
+  scientificName?: string;
+}
+
+export async function fetchEOLTaxonomy(scientificName?: string): Promise<EOLTaxonomyResult | null> {
   if (!scientificName) return null;
 
   try {
@@ -22,7 +28,9 @@ export async function fetchEOLTaxonomy(scientificName) {
     const pageData = await pageRes.json();
 
     const dataObjects = pageData.taxonConcept?.dataObjects || [];
-    const textObject = dataObjects.find(obj => obj.dataType === 'http://purl.org/dc/dcmitype/Text' && obj.description);
+    const textObject = dataObjects.find(
+      (obj: any) => obj.dataType === 'http://purl.org/dc/dcmitype/Text' && obj.description
+    );
 
     return {
       eolId: pageId,
@@ -30,7 +38,7 @@ export async function fetchEOLTaxonomy(scientificName) {
       scientificName: pageData.taxonConcept?.scientificName
     };
   } catch (err) {
-    console.warn(`EOL fetch failed for "${scientificName}":`, err.message);
+    console.warn(`EOL fetch failed for "${scientificName}":`, (err as Error).message);
     return null;
   }
 }

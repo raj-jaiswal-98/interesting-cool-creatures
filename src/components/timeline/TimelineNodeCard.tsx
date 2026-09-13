@@ -1,7 +1,13 @@
 import React from 'react';
 import { Compass, ShieldAlert, ArrowUpRight } from 'lucide-react';
+import type { Creature } from '../../types/creature';
 
-export function TimelineNodeCard({ creature, onSelect }) {
+interface TimelineNodeCardProps {
+  creature: Creature;
+  onSelect: (creature: Creature) => void;
+}
+
+export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) {
   const isExtant = creature.extinctionYear === null;
   const eraClass = `badge-${creature.era.toLowerCase()}`;
 
@@ -27,12 +33,12 @@ export function TimelineNodeCard({ creature, onSelect }) {
         cursor: 'pointer',
         transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease'
       }}
-      onMouseEnter={(e) => {
+      onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
         e.currentTarget.style.transform = 'translateY(-6px)';
         e.currentTarget.style.borderColor = 'var(--accent-primary)';
         e.currentTarget.style.boxShadow = '0 12px 30px -5px var(--bg-glow)';
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.borderColor = 'var(--border-subtle)';
         e.currentTarget.style.boxShadow = 'var(--shadow-card)';
@@ -57,10 +63,10 @@ export function TimelineNodeCard({ creature, onSelect }) {
             objectFit: 'cover',
             transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
-          onMouseEnter={(e) => {
+          onMouseEnter={(e: React.MouseEvent<HTMLImageElement>) => {
             e.currentTarget.style.transform = 'scale(1.08)';
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={(e: React.MouseEvent<HTMLImageElement>) => {
             e.currentTarget.style.transform = 'scale(1.0)';
           }}
         />

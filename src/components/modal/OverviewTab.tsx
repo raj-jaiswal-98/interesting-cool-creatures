@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import { Sparkles, Bot, ExternalLink, Ruler, Scale, ShieldAlert, Award, Compass, Loader2 } from 'lucide-react';
+import { Sparkles, Bot, ExternalLink, Ruler, Scale, ShieldAlert, Award, Loader2 } from 'lucide-react';
 import { chromeAI } from '../../services/ai/chromeAIService';
+import type { Creature } from '../../types/creature';
+import type { TaxonomyTranslation } from '../../types/ai';
 
-export function OverviewTab({ creature }) {
-  const [aiSummary, setAiSummary] = useState(null);
+interface OverviewTabProps {
+  creature: Creature;
+}
+
+export function OverviewTab({ creature }: OverviewTabProps) {
+  const [aiSummary, setAiSummary] = useState<TaxonomyTranslation | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
 
   const handleSimplify = async () => {

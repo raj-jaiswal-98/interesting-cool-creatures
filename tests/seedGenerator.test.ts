@@ -36,7 +36,7 @@ describe('SeedGenerator Utilities', () => {
     const creatureA = getDailySpotlightCreature(dummyCatalog, '2026-09-12');
     const creatureB = getDailySpotlightCreature(dummyCatalog, '2026-09-12');
     expect(creatureA).toBeDefined();
-    expect(creatureA.id).toBe(creatureB.id);
+    expect(creatureA!.id).toBe(creatureB!.id);
   });
 
   it('returns valid countdown hours, minutes, and seconds', () => {

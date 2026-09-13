@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { Dna, Sparkles, Loader2, AlertCircle, ShieldCheck, ThermometerSun, Wind, Sun, Building2 } from 'lucide-react';
+import { Dna, Sparkles, Loader2, ShieldCheck, ThermometerSun, Wind, Sun, Building2 } from 'lucide-react';
 import { chromeAI } from '../../services/ai/chromeAIService';
+import type { Creature } from '../../types/creature';
+import type { SpeculativeEvolutionResult, StressorKey } from '../../types/ai';
 
-const STRESSORS = [
+interface FutureAdaptationTabProps {
+  creature: Creature;
+}
+
+const STRESSORS: { id: StressorKey; label: string; icon: typeof ThermometerSun; desc: string }[] = [
   {
     id: 'warming',
     label: '+4°C Global Warming',
@@ -29,10 +35,10 @@ const STRESSORS = [
   }
 ];
 
-export function FutureAdaptationTab({ creature }) {
-  const [selectedStressor, setSelectedStressor] = useState('warming');
+export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
+  const [selectedStressor, setSelectedStressor] = useState<StressorKey>('warming');
   const [isSimulating, setIsSimulating] = useState(false);
-  const [simulationResult, setSimulationResult] = useState(null);
+  const [simulationResult, setSimulationResult] = useState<SpeculativeEvolutionResult | null>(null);
 
   const handleSimulate = async () => {
     setIsSimulating(true);

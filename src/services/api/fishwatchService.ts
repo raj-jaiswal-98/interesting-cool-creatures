@@ -3,7 +3,16 @@
  * Fetches marine facts, biology, and harvest sustainability for aquatic creatures.
  */
 
-export async function fetchFishWatchData(speciesName) {
+export interface FishWatchResult {
+  biology: string | null;
+  habitat: string | null;
+  physicalDescription: string | null;
+  taste: string | null;
+  texture: string | null;
+  scientificName?: string;
+}
+
+export async function fetchFishWatchData(speciesName?: string): Promise<FishWatchResult | null> {
   if (!speciesName) return null;
 
   try {
@@ -14,7 +23,7 @@ export async function fetchFishWatchData(speciesName) {
     if (!Array.isArray(data) || data.length === 0) return null;
 
     const item = data[0];
-    const stripHtml = (str) => (str ? str.replace(/<[^>]*>?/gm, '').trim() : null);
+    const stripHtml = (str: string | null | undefined) => (str ? str.replace(/<[^>]*>?/gm, '').trim() : null);
 
     return {
       biology: stripHtml(item['Biology']),
@@ -25,7 +34,7 @@ export async function fetchFishWatchData(speciesName) {
       scientificName: item['Scientific Name']
     };
   } catch (err) {
-    console.warn(`FishWatch fetch failed for "${speciesName}":`, err.message);
+    console.warn(`FishWatch fetch failed for "${speciesName}":`, (err as Error).message);
     return null;
   }
 }

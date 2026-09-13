@@ -3,7 +3,18 @@
  * Fetches verified photography, vernacular names, and taxa metadata.
  */
 
-export async function fetchINaturalistTaxa(query) {
+export interface INaturalistTaxaResult {
+  id: number;
+  commonName: string;
+  scientificName: string;
+  photoUrl?: string;
+  attribution?: string;
+  licenseCode?: string;
+  wikiUrl?: string;
+  rank?: string;
+}
+
+export async function fetchINaturalistTaxa(query?: string): Promise<INaturalistTaxaResult | null> {
   if (!query) return null;
 
   try {
@@ -28,7 +39,7 @@ export async function fetchINaturalistTaxa(query) {
       rank: match.rank
     };
   } catch (err) {
-    console.warn(`iNaturalist fetch failed for "${query}":`, err.message);
+    console.warn(`iNaturalist fetch failed for "${query}":`, (err as Error).message);
     return null;
   }
 }

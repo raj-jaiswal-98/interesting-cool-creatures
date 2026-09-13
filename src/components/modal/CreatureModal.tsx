@@ -1,34 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, Globe, Dna, Swords, Compass } from 'lucide-react';
+import { X, BookOpen, Globe, Dna, Swords } from 'lucide-react';
 import { OverviewTab } from './OverviewTab';
 import { OccurrenceMapTab } from './OccurrenceMapTab';
 import { FutureAdaptationTab } from './FutureAdaptationTab';
 import { CreatureClashTab } from './CreatureClashTab';
 import { themeEngine } from '../../services/theme/themeEngine';
+import type { Creature } from '../../types/creature';
 
-const TABS = [
+type TabId = 'overview' | 'map' | 'evolution' | 'clash';
+
+const TABS: { id: TabId; label: string; icon: typeof BookOpen }[] = [
   { id: 'overview', label: 'Overview', icon: BookOpen },
   { id: 'map', label: 'Occurrence Map', icon: Globe },
   { id: 'evolution', label: 'Future Adaptation (AI)', icon: Dna },
   { id: 'clash', label: 'Creature Clash', icon: Swords },
 ];
 
-export function CreatureModal({ creature, onClose }) {
-  const [activeTab, setActiveTab] = useState('overview');
+interface CreatureModalProps {
+  creature: Creature | null;
+  onClose: () => void;
+}
+
+export function CreatureModal({ creature, onClose }: CreatureModalProps) {
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   // Trigger dynamic theme extraction on mount
   useEffect(() => {
     if (creature) {
       themeEngine.applyCreatureTheme(creature.photoUrl, creature.themePalette);
     }
-    return () => {
-      // Revert theme or keep ambient
-    };
   }, [creature]);
 
   // Handle ESC key to close modal
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -61,7 +66,7 @@ export function CreatureModal({ creature, onClose }) {
         WebkitBackdropFilter: 'blur(12px)',
         animation: 'fadeIn 0.25s ease'
       }}
-      onClick={(e) => {
+      onClick={(e: React.MouseEvent<HTMLDivElement>) => {
         if (e.target === e.currentTarget) onClose();
       }}
       role="dialog"

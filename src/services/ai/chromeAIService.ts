@@ -1,32 +1,36 @@
-import { proceduralAI } from './proceduralSpeculationEngine.js';
+import { proceduralAI } from './proceduralSpeculationEngine';
+import type {
+  SpeculativeEvolutionResult,
+  TaxonomyTranslation,
+  CreatureClashResult,
+  AIAvailabilityStatus,
+  StressorKey
+} from '../../types/ai';
+import type { Creature } from '../../types/creature';
+import type { AILanguageModelSession } from '../../types/chrome-ai';
 
 /**
- * ChromeAIService provides a unified interface for Chrome Built-in Prompt API (Gemini Nano)
- * with transparent fallback to ProceduralSpeculationEngine when native on-device AI is absent.
+ * Unified interface for Chrome's Built-in Prompt API (Gemini Nano) with
+ * transparent fallback to ProceduralSpeculationEngine when native on-device AI is absent.
  */
 class ChromeAIService {
-  constructor() {
-    this.session = null;
-    this.availabilityStatus = null;
-    this.fallbackEngine = proceduralAI;
-  }
+  session: AILanguageModelSession | null = null;
+  availabilityStatus: AIAvailabilityStatus | null = null;
+  fallbackEngine = proceduralAI;
 
-  /**
-   * Checks whether Chrome Built-in AI is accessible on this machine/browser.
-   * @returns {Promise<'readily' | 'after-download' | 'unavailable'>}
-   */
-  async checkAvailability() {
+  async checkAvailability(): Promise<AIAvailabilityStatus> {
     if (typeof window === 'undefined') return 'unavailable';
 
     try {
-      if (window.ai && window.ai.languageModel) {
-        if (typeof window.ai.languageModel.availability === 'function') {
-          this.availabilityStatus = await window.ai.languageModel.availability();
+      const languageModel = window.ai?.languageModel;
+      if (languageModel) {
+        if (typeof languageModel.availability === 'function') {
+          this.availabilityStatus = (await languageModel.availability()) as AIAvailabilityStatus;
           return this.availabilityStatus;
         }
-        if (typeof window.ai.languageModel.capabilities === 'function') {
-          const caps = await window.ai.languageModel.capabilities();
-          this.availabilityStatus = caps.available;
+        if (typeof languageModel.capabilities === 'function') {
+          const caps = await languageModel.capabilities();
+          this.availabilityStatus = caps.available as AIAvailabilityStatus;
           return this.availabilityStatus;
         }
         this.availabilityStatus = 'readily';
@@ -40,17 +44,14 @@ class ChromeAIService {
     return 'unavailable';
   }
 
-  /**
-   * Initializes or gets the active Gemini Nano prompt session.
-   */
-  async initSession(mode = 'creative') {
+  async initSession() {
     const status = await this.checkAvailability();
     if (status !== 'readily' && status !== 'after-download') {
       return null;
     }
 
     try {
-      if (!this.session) {
+      if (!this.session && window.ai?.languageModel) {
         this.session = await window.ai.languageModel.create({
           systemPrompt: 'You are an expert evolutionary biologist, paleontologist, and science communicator. Give engaging, scientifically rigorous answers in clear concise prose.'
         });
@@ -62,12 +63,9 @@ class ChromeAIService {
     }
   }
 
-  /**
-   * Translates dense academic taxonomy into engaging prose.
-   */
-  async translateTaxonomy(academicText, creatureName) {
+  async translateTaxonomy(academicText: string, creatureName: string): Promise<TaxonomyTranslation> {
     try {
-      const session = await this.initSession('precise');
+      const session = await this.initSession();
       if (session) {
         const prompt = `Rewrite this scientific description of ${creatureName} into a fun, fascinating, 2-sentence summary suitable for a science museum: "${academicText}"`;
         const result = await session.prompt(prompt);
@@ -80,27 +78,27 @@ class ChromeAIService {
       console.warn('Native AI translation failed:', err);
     }
 
-    // Procedural fallback
     return {
       text: this.fallbackEngine.translateTaxonomy(academicText, creatureName),
       isNativeAI: false
     };
   }
 
-  /**
-   * Generates speculative future evolutionary adaptations under environmental stressors.
-   */
-  async generateSpeculativeEvolution(creatureName, habitat, stressorKey = 'warming') {
+  async generateSpeculativeEvolution(
+    creatureName: string,
+    habitat: string,
+    stressorKey: StressorKey = 'warming'
+  ): Promise<SpeculativeEvolutionResult> {
     try {
-      const session = await this.initSession('creative');
+      const session = await this.initSession();
       if (session) {
         const stressorDesc = this.fallbackEngine.stressors[stressorKey] || 'climate instability';
-        const prompt = `Imagine ${creatureName}, currently adapted to ${habitat}. Fast forward 10,000 years in the future under extreme ${stressorDesc}. 
+        const prompt = `Imagine ${creatureName}, currently adapted to ${habitat}. Fast forward 10,000 years in the future under extreme ${stressorDesc}.
 Respond with:
 1) A 2-sentence narrative of its future descendant.
 2) Three specific physical evolutionary adaptations.
 Keep it scientifically grounded yet imaginative.`;
-        
+
         const rawResponse = await session.prompt(prompt);
         return {
           futureScientificName: `Neo-${creatureName.replace(/\s+/g, '')} speculatis`,
@@ -120,14 +118,11 @@ Keep it scientifically grounded yet imaginative.`;
     return this.fallbackEngine.generateSpeculativeEvolution(creatureName, habitat, stressorKey);
   }
 
-  /**
-   * Simulates an evolutionary combat clash between two organisms.
-   */
-  async simulateCreatureClash(creatureA, creatureB) {
+  async simulateCreatureClash(creatureA: Creature, creatureB: Creature): Promise<CreatureClashResult> {
     try {
-      const session = await this.initSession('creative');
+      const session = await this.initSession();
       if (session) {
-        const prompt = `Simulate a realistic ecological duel between ${creatureA.commonName} (${creatureA.habitat}) and ${creatureB.commonName} (${creatureB.habitat}). 
+        const prompt = `Simulate a realistic ecological duel between ${creatureA.commonName} (${creatureA.habitat}) and ${creatureB.commonName} (${creatureB.habitat}).
 Briefly describe:
 - Round 1: Opening encounter
 - Round 2: Clash of traits
@@ -141,7 +136,7 @@ Briefly describe:
           winner: proceduralOutcome.winner,
           winnerId: proceduralOutcome.winnerId,
           winProbability: proceduralOutcome.winProbability,
-          combatLog: logText.split('\n').filter(line => line.trim().length > 0),
+          combatLog: logText.split('\n').filter((line: string) => line.trim().length > 0),
           conclusion: `Simulated by Gemini Nano: ${proceduralOutcome.winner} leverages critical biome advantages.`,
           isNativeAI: true
         };
@@ -156,7 +151,7 @@ Briefly describe:
   /**
    * Destroys active AI session to reclaim memory.
    */
-  destroySession() {
+  destroySession(): void {
     if (this.session && typeof this.session.destroy === 'function') {
       try {
         this.session.destroy();

@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
-import { Swords, Trophy, Loader2, Shield, Flame, Scale, ChevronRight } from 'lucide-react';
+import { Swords, Trophy, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { chromeAI } from '../../services/ai/chromeAIService';
 import { CREATURE_CATALOG } from '../../data/creatureCatalog';
+import type { Creature } from '../../types/creature';
+import type { CreatureClashResult } from '../../types/ai';
 
-export function CreatureClashTab({ creature }) {
+interface CreatureClashTabProps {
+  creature: Creature;
+}
+
+export function CreatureClashTab({ creature }: CreatureClashTabProps) {
   // Filter out the active creature so it cannot fight itself
   const opponents = CREATURE_CATALOG.filter((c) => c.id !== creature.id);
   const [selectedOpponentId, setSelectedOpponentId] = useState(opponents[0]?.id);
   const [isFighting, setIsFighting] = useState(false);
-  const [duelResult, setDuelResult] = useState(null);
+  const [duelResult, setDuelResult] = useState<CreatureClashResult | null>(null);
 
   const opponent = opponents.find((c) => c.id === selectedOpponentId) || opponents[0];
 
@@ -65,7 +71,7 @@ export function CreatureClashTab({ creature }) {
         </label>
         <select
           value={selectedOpponentId}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
             setSelectedOpponentId(e.target.value);
             setDuelResult(null);
           }}

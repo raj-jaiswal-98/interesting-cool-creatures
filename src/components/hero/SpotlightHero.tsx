@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Clock, Compass, ShieldAlert, Ruler, Scale, ArrowRight } from 'lucide-react';
 import { getTimeUntilNextSpotlight } from '../../utils/seedGenerator';
+import type { Creature } from '../../types/creature';
 
-export function SpotlightHero({ creature, onSelectCreature }) {
+interface SpotlightHeroProps {
+  creature: Creature | null;
+  onSelectCreature: (creature: Creature) => void;
+}
+
+export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps) {
   const [countdown, setCountdown] = useState(getTimeUntilNextSpotlight());
 
   useEffect(() => {
@@ -106,7 +112,8 @@ export function SpotlightHero({ creature, onSelectCreature }) {
                 left: 0,
                 filter: 'brightness(0.9) contrast(1.05)',
                 transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
-                viewTransitionName: 'creature-spotlight'
+                // viewTransitionName isn't in React's CSSProperties typings yet
+                ...({ viewTransitionName: 'creature-spotlight' } as React.CSSProperties)
               }}
               className="hero-creature-img"
             />
@@ -132,7 +139,7 @@ export function SpotlightHero({ creature, onSelectCreature }) {
                 {creature.era} Era
               </span>
               <span className={`badge ${isExtant ? 'badge-extant' : 'badge-extinct'}`}>
-                {isExtant ? 'Living Species' : `Extinct (~${Math.abs(creature.extinctionYear).toLocaleString()} ${creature.extinctionYear < 0 ? 'BCE' : 'CE'})`}
+                {isExtant ? 'Living Species' : `Extinct (~${Math.abs(creature.extinctionYear!).toLocaleString()} ${creature.extinctionYear! < 0 ? 'BCE' : 'CE'})`}
               </span>
               <span className="badge" style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--text-secondary)', borderColor: 'rgba(255,255,255,0.1)' }}>
                 <Compass size={12} style={{ marginRight: '4px' }} />
