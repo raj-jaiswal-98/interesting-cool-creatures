@@ -43,6 +43,8 @@ jobs:
         with:
           path: './dist'
 
+      # This step will execute on pushes, but safely skip on PRs so the job succeeds
       - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' # <-- REQUIRED: Skips deployment on PRs to prevent errors
         id: deployment
         uses: actions/deploy-pages@v4
