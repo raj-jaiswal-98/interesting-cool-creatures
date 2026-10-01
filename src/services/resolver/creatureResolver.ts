@@ -6,7 +6,7 @@
  */
 
 import type { NormalizedCreature, CreatureGeoCoordinate } from '../../types/normalizedCreature';
-import type { Creature, HabitatType, Era, ThemePalette } from '../../types/creature';
+import type { Creature, HabitatType, Era, ThemePalette, CreatureCoordinate } from '../../types/creature';
 import { CREATURE_CATALOG } from '../../data/creatureCatalog';
 import { gbifAdapter } from './adapters/gbifAdapter';
 import { inaturalistAdapter } from './adapters/inaturalistAdapter';
@@ -267,6 +267,92 @@ export class CreatureResolver {
   }
 
   /**
+   * Continually streams unique research-grade creatures from public biodiversity APIs
+   * in progressive batches until targetCount (default 100) is reached.
+   * Emits onBatchProgress as each batch resolves so UI updates progressively in real-time.
+   */
+  async streamUntilTargetCount(
+    targetCount = 100,
+    onBatchProgress?: (batch: Creature[], totalSoFar: number) => void
+  ): Promise<Creature[]> {
+    const cacheKey = `resolver:catalog_target_${targetCount}`;
+    const cached = await creatureCache.get<Creature[]>(cacheKey);
+    if (cached && cached.length >= targetCount) {
+      if (onBatchProgress) {
+        onBatchProgress(cached, cached.length);
+      }
+      return cached;
+    }
+
+    const seenIds = new Set<string>();
+    const seenScientificNames = new Set<string>();
+    const allCreatures: Creature[] = [];
+
+    // Seed with baseline curated catalog
+    for (const c of CREATURE_CATALOG) {
+      seenIds.add(c.id.toLowerCase());
+      seenScientificNames.add(c.scientificName.toLowerCase());
+      allCreatures.push(c);
+    }
+
+    if (onBatchProgress) {
+      onBatchProgress(allCreatures, allCreatures.length);
+    }
+
+    let page = 1;
+    const maxPages = 8;
+
+    while (allCreatures.length < targetCount && page <= maxPages) {
+      try {
+        const url = `https://api.inaturalist.org/v1/observations?popular=true&has[]=photos&quality_grade=research&iconic_taxa=Aves,Mammalia,Reptilia,Amphibia,Actinopterygii,Mollusca,Insecta,Arachnida&per_page=35&page=${page}&order=desc&order_by=votes`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          page++;
+          continue;
+        }
+
+        const data = await res.json();
+        const batch: Creature[] = [];
+
+        for (const item of data.results || []) {
+          const creature = inaturalistObservationToCreature(item);
+          if (!creature) continue;
+
+          const sciLower = creature.scientificName.toLowerCase();
+          const idLower = creature.id.toLowerCase();
+          if (seenIds.has(idLower) || seenScientificNames.has(sciLower)) {
+            continue;
+          }
+
+          seenIds.add(idLower);
+          seenScientificNames.add(sciLower);
+          batch.push(creature);
+          allCreatures.push(creature);
+
+          if (allCreatures.length >= targetCount) {
+            break;
+          }
+        }
+
+        if (batch.length > 0 && onBatchProgress) {
+          onBatchProgress(batch, allCreatures.length);
+        }
+
+        page++;
+      } catch (err) {
+        console.warn(`[CreatureResolver] Error streaming page ${page}:`, err);
+        break;
+      }
+    }
+
+    if (allCreatures.length >= targetCount) {
+      await creatureCache.set(cacheKey, allCreatures, CACHE_TTLS.RECENT_OBSERVATIONS);
+    }
+
+    return allCreatures;
+  }
+
+  /**
    * Fetches trending research-grade species observations live from iNaturalist.
    */
   async fetchTrendingLiveCreatures(limit = 8): Promise<Creature[]> {
@@ -276,7 +362,7 @@ export class CreatureResolver {
 
     try {
       const res = await fetch(
-        `https://api.inaturalist.org/v1/observations?popular=true&has[]=photos&quality_grade=research&per_page=${limit}&order=desc&order_by=votes`
+        `https://api.inaturalist.org/v1/observations?popular=true&has[]=photos&quality_grade=research&iconic_taxa=Aves,Mammalia,Reptilia,Amphibia,Actinopterygii,Mollusca,Insecta,Arachnida&per_page=${limit}&order=desc&order_by=votes`
       );
       if (!res.ok) return [];
 
@@ -284,30 +370,8 @@ export class CreatureResolver {
       const results: Creature[] = [];
 
       for (const item of data.results || []) {
-        if (!item.taxon?.name) continue;
-        const normalized = await this.resolve(item.taxon.name);
-
-        // Supplement with the observation's specific photo & coords if present
-        const obsPhoto = item.photos?.[0]?.url?.replace('square', 'medium') || item.taxon?.default_photo?.medium_url;
-        if (obsPhoto) {
-          normalized.media.primaryImage = obsPhoto;
-          if (!normalized.media.gallery.includes(obsPhoto)) {
-            normalized.media.gallery.unshift(obsPhoto);
-          }
-        }
-
-        if (item.geojson?.coordinates && normalized.geography.coordinates.length === 0) {
-          const [lng, lat] = item.geojson.coordinates;
-          normalized.geography.coordinates.push({
-            lat,
-            lng,
-            country: item.place_guess || 'Global Observation',
-            year: item.observed_on_details?.year || new Date().getFullYear(),
-            basisOfRecord: 'HUMAN_OBSERVATION'
-          });
-        }
-
-        results.push(normalizedToCreature(normalized));
+        const creature = inaturalistObservationToCreature(item);
+        if (creature) results.push(creature);
       }
 
       if (results.length > 0) {
@@ -391,6 +455,138 @@ export class CreatureResolver {
       return [];
     }
   }
+}
+
+/**
+ * Converts a raw research-grade iNaturalist observation item directly into a Creature interface.
+ */
+export function inaturalistObservationToCreature(item: any): Creature | null {
+  if (!item || !item.taxon?.name) return null;
+  const photo =
+    item.photos?.[0]?.url?.replace('square', 'medium') ||
+    item.taxon?.default_photo?.medium_url;
+  if (!photo) return null;
+
+  const commonName = item.taxon.preferred_common_name || item.taxon.name;
+  const scientificName = item.taxon.name;
+  const iconic = (item.taxon.iconic_taxon_name || '').toLowerCase();
+  const placeGuess = item.place_guess || 'Global Ecosystem';
+
+  // Infer habitat type
+  let habitatType: HabitatType = 'forest';
+  if (iconic === 'aves') {
+    habitatType = 'aerial';
+  } else if (iconic === 'actinopterygii' || iconic === 'mollusca') {
+    habitatType = 'marine';
+  } else if (
+    placeGuess.toLowerCase().includes('arctic') ||
+    placeGuess.toLowerCase().includes('alaska') ||
+    placeGuess.toLowerCase().includes('antarctica') ||
+    placeGuess.toLowerCase().includes('norway') ||
+    (placeGuess.toLowerCase().includes('island') && placeGuess.toLowerCase().includes('ice'))
+  ) {
+    habitatType = 'tundra';
+  } else if (
+    placeGuess.toLowerCase().includes('ocean') ||
+    placeGuess.toLowerCase().includes('sea') ||
+    placeGuess.toLowerCase().includes('reef') ||
+    placeGuess.toLowerCase().includes('beach') ||
+    placeGuess.toLowerCase().includes('coast')
+  ) {
+    habitatType = 'marine';
+  } else if (
+    placeGuess.toLowerCase().includes('desert') ||
+    placeGuess.toLowerCase().includes('sahara') ||
+    placeGuess.toLowerCase().includes('canyon')
+  ) {
+    habitatType = 'volcanic';
+  }
+
+  // Infer diet based on taxon
+  let diet = 'Omnivore';
+  if (iconic === 'aves') diet = 'Granivore / Insectivore';
+  else if (iconic === 'actinopterygii') diet = 'Carnivore (Piscivore)';
+  else if (iconic === 'insecta') diet = 'Herbivore / Nectarivore';
+  else if (iconic === 'arachnida') diet = 'Carnivore (Predator)';
+  else if (iconic === 'reptilia') diet = 'Carnivore';
+  else if (iconic === 'amphibia') diet = 'Insectivore';
+  else if (iconic === 'mammalia') diet = 'Omnivore';
+
+  // Stats heuristics
+  let dangerLevel = 1;
+  let lengthMeters = 0.3;
+  let weightKg = 0.5;
+
+  if (iconic === 'mammalia') {
+    dangerLevel = 2;
+    lengthMeters = 1.2;
+    weightKg = 45;
+  } else if (iconic === 'reptilia') {
+    dangerLevel = 3;
+    lengthMeters = 1.0;
+    weightKg = 15;
+  } else if (iconic === 'arachnida') {
+    dangerLevel = 3;
+    lengthMeters = 0.05;
+    weightKg = 0.02;
+  } else if (iconic === 'actinopterygii') {
+    dangerLevel = 1;
+    lengthMeters = 0.4;
+    weightKg = 1.5;
+  }
+
+  const rarityScore = Math.min(98, Math.max(60, 95 - Math.floor((item.identifications_count || 1) / 3)));
+
+  const coordinates: CreatureCoordinate[] = [];
+  if (item.geojson?.coordinates && Array.isArray(item.geojson.coordinates) && item.geojson.coordinates.length >= 2) {
+    coordinates.push({
+      lat: item.geojson.coordinates[1],
+      lng: item.geojson.coordinates[0],
+      country: placeGuess,
+      year: item.observed_on_details?.year || new Date().getFullYear(),
+      basisOfRecord: 'HUMAN_OBSERVATION'
+    });
+  }
+
+  const palettes: Record<HabitatType, ThemePalette> = {
+    marine: { primary: '#00D2FF', darkMuted: '#071A2B', glow: 'rgba(0, 210, 255, 0.3)', textAccent: '#68E1FD', surface: '#0A2238' },
+    volcanic: { primary: '#FF4D4D', darkMuted: '#2B0808', glow: 'rgba(255, 77, 77, 0.3)', textAccent: '#FF9494', surface: '#380D0D' },
+    forest: { primary: '#00FF66', darkMuted: '#062619', glow: 'rgba(0, 255, 102, 0.3)', textAccent: '#6EE7B7', surface: '#0A3B27' },
+    tundra: { primary: '#A78BFA', darkMuted: '#170E30', glow: 'rgba(167, 139, 250, 0.3)', textAccent: '#C4B5FD', surface: '#221545' },
+    aerial: { primary: '#FBBF24', darkMuted: '#2E2005', glow: 'rgba(251, 191, 36, 0.3)', textAccent: '#FDE68A', surface: '#422F09' }
+  };
+
+  const genus = scientificName.split(' ')[0] || scientificName;
+
+  return {
+    id: `inat-${item.id}`,
+    commonName,
+    scientificName,
+    extinctionYear: null,
+    era: 'Modern',
+    habitat: placeGuess,
+    habitatType,
+    photoUrl: photo,
+    description: `Research-grade sighting of ${commonName} (${scientificName}) documented in ${placeGuess}. Verified through global biodiversity observer networks.`,
+    diet,
+    stats: {
+      lengthMeters,
+      weightKg,
+      dangerLevel,
+      rarityScore
+    },
+    taxonomy: {
+      kingdom: 'Animalia',
+      phylum: iconic === 'insecta' || iconic === 'arachnida' ? 'Arthropoda' : iconic === 'mollusca' ? 'Mollusca' : 'Chordata',
+      class: item.taxon.iconic_taxon_name || 'Animalia',
+      order: genus,
+      family: item.taxon.iconic_taxon_name || 'Fauna',
+      genus
+    },
+    coordinates,
+    themePalette: palettes[habitatType],
+    wikiUrl: item.taxon.wikipedia_url || `https://en.wikipedia.org/wiki/${encodeURIComponent(scientificName)}`
+  };
 }
 
 /**

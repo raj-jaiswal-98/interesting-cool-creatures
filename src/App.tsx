@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Dna, Globe2, Cpu, Radio } from 'lucide-react';
 import { CREATURE_CATALOG } from './data/creatureCatalog';
 import { getDailySpotlightCreature } from './utils/seedGenerator';
-import { themeEngine } from './services/theme/themeEngine';
+import { themeEngine, BRUTALIST_THEMES } from './services/theme/themeEngine';
 import { HabitatCanvas } from './components/hero/HabitatCanvas';
 import { SpotlightHero } from './components/hero/SpotlightHero';
 import { ExtinctionTimeline } from './components/timeline/ExtinctionTimeline';
@@ -26,63 +26,98 @@ export function AppContent() {
   const [catalog, setCatalog] = useState<Creature[]>(CREATURE_CATALOG);
   const [spotlightCreature, setSpotlightCreature] = useState<Creature | null>(null);
   const [selectedCreature, setSelectedCreature] = useState<Creature | null>(null);
+  const [modalInitialTab, setModalInitialTab] = useState<'overview' | 'map' | 'evolution' | 'clash'>('overview');
+  const [activeTheme, setActiveTheme] = useState<string>('acid');
   const [aiStatus, setAiStatus] = useState<AIAvailabilityStatus | 'checking'>('checking');
-  const [isLiveSyncing, setIsLiveSyncing] = useState<boolean>(false);
-  const [liveAddedCount, setLiveAddedCount] = useState<number>(0);
+  const [streamingProgress, setStreamingProgress] = useState<{
+    current: number;
+    target: number;
+    isStreaming: boolean;
+  }>({
+    current: CREATURE_CATALOG.length,
+    target: 100,
+    isStreaming: true
+  });
+
+  const startStreamingTo100 = () => {
+    setStreamingProgress((prev) => ({ ...prev, isStreaming: true }));
+
+    creatureResolver
+      .streamUntilTargetCount(100, (batch, totalSoFar) => {
+        setCatalog((prev) => {
+          const existingIds = new Set(prev.map((c) => c.id.toLowerCase()));
+          const existingNames = new Set(prev.map((c) => c.scientificName.toLowerCase()));
+          const fresh = batch.filter(
+            (c) =>
+              !existingIds.has(c.id.toLowerCase()) &&
+              !existingNames.has(c.scientificName.toLowerCase())
+          );
+          return [...prev, ...fresh];
+        });
+        setStreamingProgress({
+          current: totalSoFar,
+          target: 100,
+          isStreaming: totalSoFar < 100
+        });
+      })
+      .then((finalCatalog) => {
+        setCatalog((prev) => {
+          const existingIds = new Set(prev.map((c) => c.id.toLowerCase()));
+          const existingNames = new Set(prev.map((c) => c.scientificName.toLowerCase()));
+          const fresh = finalCatalog.filter(
+            (c) =>
+              !existingIds.has(c.id.toLowerCase()) &&
+              !existingNames.has(c.scientificName.toLowerCase())
+          );
+          return [...prev, ...fresh];
+        });
+        setStreamingProgress((prev) => ({
+          current: Math.max(prev.current, finalCatalog.length),
+          target: 100,
+          isStreaming: false
+        }));
+      })
+      .catch((err) => {
+        console.warn('Progressive creature streaming deferred:', err);
+      })
+      .finally(() => {
+        setStreamingProgress((prev) => ({ ...prev, isStreaming: false }));
+      });
+  };
 
   useEffect(() => {
+    // Initialize default non-blue Neo-Brutalist theme
+    themeEngine.applyBrutalistTheme('acid');
+
     const daily = getDailySpotlightCreature(CREATURE_CATALOG);
     setSpotlightCreature(daily);
-
-    if (daily) {
-      themeEngine.applyCreatureTheme(daily.photoUrl, daily.themePalette);
-    }
 
     // Check Chrome AI Availability
     chromeAI.checkAvailability().then((status) => {
       setAiStatus(status);
     });
 
-    // Ingest dynamic research-grade organisms live from iNaturalist & GBIF
-    setIsLiveSyncing(true);
-    creatureResolver
-      .fetchTrendingLiveCreatures(8)
-      .then((liveCreatures) => {
-        if (liveCreatures.length > 0) {
-          setCatalog((prev) => {
-            const existingIds = new Set(prev.map((c) => c.id.toLowerCase()));
-            const unique = liveCreatures.filter((c) => !existingIds.has(c.id.toLowerCase()));
-            setLiveAddedCount(unique.length);
-            return [...prev, ...unique];
-          });
-        }
-      })
-      .catch((err) => {
-        console.warn('Initial live species sync deferred:', err);
-      })
-      .finally(() => {
-        setIsLiveSyncing(false);
-      });
+    // Automatically stream research-grade species until we have 100 creatures
+    startStreamingTo100();
   }, []);
 
   const [isPureLiveMode, setIsPureLiveMode] = useState<boolean>(false);
 
   const handleTogglePureLiveMode = async () => {
     if (!isPureLiveMode) {
-      setIsLiveSyncing(true);
+      setStreamingProgress((prev) => ({ ...prev, isStreaming: true }));
       try {
-        const pureLive = await creatureResolver.fetchTrendingLiveCreatures(12);
+        const pureLive = await creatureResolver.fetchTrendingLiveCreatures(15);
         if (pureLive.length > 0) {
           setCatalog(pureLive);
           setSpotlightCreature(pureLive[0]);
           themeEngine.applyCreatureTheme(pureLive[0].photoUrl, pureLive[0].themePalette);
           setIsPureLiveMode(true);
-          setLiveAddedCount(pureLive.length);
         }
       } catch (err) {
         console.warn('Failed to switch to pure live stream:', err);
       } finally {
-        setIsLiveSyncing(false);
+        setStreamingProgress((prev) => ({ ...prev, isStreaming: false }));
       }
     } else {
       setCatalog(CREATURE_CATALOG);
@@ -90,16 +125,26 @@ export function AppContent() {
       setSpotlightCreature(daily);
       if (daily) themeEngine.applyCreatureTheme(daily.photoUrl, daily.themePalette);
       setIsPureLiveMode(false);
-      setLiveAddedCount(0);
+      startStreamingTo100();
     }
   };
 
   const handleAddDynamicCreatures = (newCreatures: Creature[]) => {
     setCatalog((prev) => {
       const existingIds = new Set(prev.map((c) => c.id.toLowerCase()));
-      const unique = newCreatures.filter((c) => !existingIds.has(c.id.toLowerCase()));
-      setLiveAddedCount((count) => count + unique.length);
-      return [...prev, ...unique];
+      const existingNames = new Set(prev.map((c) => c.scientificName.toLowerCase()));
+      const unique = newCreatures.filter(
+        (c) =>
+          !existingIds.has(c.id.toLowerCase()) &&
+          !existingNames.has(c.scientificName.toLowerCase())
+      );
+      const updated = [...prev, ...unique];
+      setStreamingProgress({
+        current: updated.length,
+        target: 100,
+        isStreaming: false
+      });
+      return updated;
     });
   };
 
@@ -109,8 +154,8 @@ export function AppContent() {
       {spotlightCreature && (
         <HabitatCanvas
           habitat={spotlightCreature.habitatType}
-          primaryColor={spotlightCreature.themePalette?.primary || '#00F0FF'}
-          glowColor={spotlightCreature.themePalette?.glow || 'rgba(0, 240, 255, 0.25)'}
+          primaryColor={spotlightCreature.themePalette?.primary || 'var(--accent-primary)'}
+          glowColor={spotlightCreature.themePalette?.glow || 'var(--bg-glow)'}
         />
       )}
 
@@ -160,8 +205,157 @@ export function AppContent() {
             </div>
           </div>
 
-          {/* Quick Metrics & AI Status Badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {/* Quick Metrics & Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {/* Brutalist Color Theme Switcher */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1.5px solid var(--brutalist-border)',
+                borderRadius: '6px',
+                padding: '3px 5px'
+              }}
+              title="Brutalist Theme Palette Switcher"
+            >
+              {Object.values(BRUTALIST_THEMES).map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    setActiveTheme(t.id);
+                    themeEngine.applyBrutalistTheme(t.id);
+                  }}
+                  className={`btn-subtle-brutalist ${activeTheme === t.id ? 'active' : ''}`}
+                  style={{
+                    padding: '3px 8px',
+                    fontSize: '0.68rem',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title={`Switch to ${t.name}`}
+                >
+                  <span style={{ fontSize: '0.75rem' }}>{t.icon}</span>
+                  <span>{t.name.split(' ')[0]}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* 100 Species Streaming Telemetry Badge */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: streamingProgress.isStreaming
+                  ? 'rgba(0, 255, 102, 0.08)'
+                  : catalog.length >= 100
+                  ? 'rgba(0, 255, 102, 0.12)'
+                  : 'rgba(255, 255, 255, 0.04)',
+                border: streamingProgress.isStreaming
+                  ? '1.5px solid var(--accent-primary)'
+                  : '1px solid var(--border-subtle)',
+                padding: '5px 12px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.78rem',
+                color: 'var(--text-secondary)',
+                transition: 'all 0.3s ease'
+              }}
+              title="Global Biodiversity Stream Status"
+            >
+              <Globe2
+                size={14}
+                className={streamingProgress.isStreaming ? 'animate-spin-slow' : ''}
+                style={{ color: 'var(--accent-primary)' }}
+              />
+              <span>
+                <strong style={{ color: 'var(--accent-primary)', fontSize: '0.84rem' }}>{catalog.length}</strong>
+                <span style={{ color: 'var(--text-muted)', margin: '0 2px' }}>/</span>
+                <span>100 Species</span>
+                {streamingProgress.isStreaming ? (
+                  <span
+                    style={{
+                      marginLeft: '6px',
+                      color: 'var(--accent-primary)',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em'
+                    }}
+                    className="animate-pulse"
+                  >
+                    (Streaming Live...)
+                  </span>
+                ) : catalog.length >= 100 ? (
+                  <span
+                    style={{
+                      marginLeft: '6px',
+                      color: 'var(--accent-primary)',
+                      fontWeight: 700
+                    }}
+                  >
+                    (✓ Complete)
+                  </span>
+                ) : null}
+              </span>
+            </div>
+
+            {/* Quick Action Button to Trigger or Re-stream */}
+            <button
+              onClick={() => startStreamingTo100()}
+              disabled={streamingProgress.isStreaming}
+              className="btn btn-secondary"
+              style={{
+                fontSize: '0.78rem',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-full)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: streamingProgress.isStreaming
+                  ? '1px solid var(--accent-primary)'
+                  : '1px solid var(--border-subtle)',
+                background: streamingProgress.isStreaming
+                  ? 'rgba(0, 255, 102, 0.08)'
+                  : 'rgba(255, 255, 255, 0.04)'
+              }}
+              title="Stream until at least 100 research-grade species are ingested"
+            >
+              <Radio
+                size={14}
+                className={streamingProgress.isStreaming ? 'animate-pulse' : ''}
+                style={{ color: 'var(--accent-primary)' }}
+              />
+              <span>
+                {streamingProgress.isStreaming
+                  ? `Ingesting (${catalog.length}/100)...`
+                  : catalog.length >= 100
+                  ? 'Sync 100 Species'
+                  : 'Fetch to 100'}
+              </span>
+            </button>
+
+            <button
+              onClick={handleTogglePureLiveMode}
+              disabled={streamingProgress.isStreaming}
+              className="btn btn-secondary"
+              style={{
+                fontSize: '0.78rem',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-full)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: isPureLiveMode ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                background: isPureLiveMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.04)'
+              }}
+              title="Toggle between scientific archive and 100% dynamically fetched live organisms"
+            >
+              <Radio size={14} style={{ color: isPureLiveMode ? 'var(--accent-primary)' : 'var(--text-muted)' }} />
+              <span>{isPureLiveMode ? 'Live Feed (Active)' : 'Pure Live Feed'}</span>
+            </button>
+
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -173,71 +367,8 @@ export function AppContent() {
               fontSize: '0.78rem',
               color: 'var(--text-secondary)'
             }}>
-              <Globe2 size={14} style={{ color: 'var(--accent-primary)' }} />
-              <span>
-                {catalog.length} Species{' '}
-                {isPureLiveMode ? (
-                  <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>
-                    (100% Live Stream)
-                  </span>
-                ) : liveAddedCount > 0 ? (
-                  <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>
-                    (+{liveAddedCount} Live Synced)
-                  </span>
-                ) : (
-                  'Cataloged'
-                )}
-              </span>
-            </div>
-
-            <button
-              onClick={handleTogglePureLiveMode}
-              disabled={isLiveSyncing}
-              className="btn btn-secondary"
-              style={{
-                fontSize: '0.78rem',
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                border: isPureLiveMode ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
-                background: isPureLiveMode ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)'
-              }}
-              title="Toggle between scientific archive and 100% dynamically fetched live organisms"
-            >
-              <Radio size={14} style={{ color: isPureLiveMode ? 'var(--accent-primary)' : 'var(--text-muted)' }} />
-              <span>{isPureLiveMode ? 'Mode: 100% Live Stream' : 'Switch to Pure Live Feed'}</span>
-            </button>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: isLiveSyncing ? 'rgba(0, 240, 255, 0.12)' : 'rgba(16, 185, 129, 0.12)',
-              border: `1px solid ${isLiveSyncing ? 'rgba(0, 240, 255, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.78rem',
-              color: isLiveSyncing ? '#38BDF8' : '#34D399'
-            }}>
-              <Radio size={14} className={isLiveSyncing ? 'animate-pulse' : ''} />
-              <span>{isLiveSyncing ? 'Syncing Live Biodiversity...' : 'Live Stream Active'}</span>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: aiStatus === 'readily' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(56, 189, 248, 0.12)',
-              border: `1px solid ${aiStatus === 'readily' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(56, 189, 248, 0.3)'}`,
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.78rem',
-              color: aiStatus === 'readily' ? '#34D399' : '#38BDF8'
-            }}>
-              <Cpu size={14} />
-              <span>{aiStatus === 'readily' ? 'Gemini Nano Active' : 'Procedural AI Online'}</span>
+              <Cpu size={14} style={{ color: 'var(--accent-primary)' }} />
+              <span>{aiStatus === 'readily' ? 'Gemini Nano' : 'Procedural AI'}</span>
             </div>
           </div>
         </div>
@@ -254,8 +385,13 @@ export function AppContent() {
         {/* Evolutionary Timeline & Filterable Catalog */}
         <ExtinctionTimeline
           creatures={catalog}
-          onSelectCreature={(c: Creature) => setSelectedCreature(c)}
+          onSelectCreature={(c: Creature, tab = 'overview') => {
+            setSelectedCreature(c);
+            setModalInitialTab(tab);
+          }}
           onAddCreatures={handleAddDynamicCreatures}
+          streamingProgress={streamingProgress}
+          onStreamTo100={startStreamingTo100}
         />
       </main>
 
@@ -263,6 +399,7 @@ export function AppContent() {
       {selectedCreature && (
         <CreatureModal
           creature={selectedCreature}
+          initialTab={modalInitialTab}
           onClose={() => {
             setSelectedCreature(null);
             // Re-apply daily spotlight theme when closing
