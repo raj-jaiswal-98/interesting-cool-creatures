@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, Sparkles, Globe, Loader2, Compass } from 'lucide-react';
 import { TimelineNodeCard } from './TimelineNodeCard';
+import { creatureResolver } from '../../services/resolver/creatureResolver';
 import type { Creature } from '../../types/creature';
 
 type SortOption = 'chronology-asc' | 'chronology-desc' | 'danger' | 'name';
@@ -8,6 +9,7 @@ type SortOption = 'chronology-asc' | 'chronology-desc' | 'danger' | 'name';
 interface ExtinctionTimelineProps {
   creatures: Creature[];
   onSelectCreature: (creature: Creature) => void;
+  onAddCreatures?: (newCreatures: Creature[]) => void;
 }
 
 const ERAS = [
@@ -19,10 +21,51 @@ const ERAS = [
   { id: 'Modern', label: 'Modern Extant' }
 ];
 
-export function ExtinctionTimeline({ creatures, onSelectCreature }: ExtinctionTimelineProps) {
+export function ExtinctionTimeline({ creatures, onSelectCreature, onAddCreatures }: ExtinctionTimelineProps) {
   const [selectedEra, setSelectedEra] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('chronology-asc');
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [isSearchingLive, setIsSearchingLive] = useState(false);
+  const [liveSearchFeedback, setLiveSearchFeedback] = useState<string | null>(null);
+
+  const handleDiscoverLive = async () => {
+    setIsDiscovering(true);
+    setLiveSearchFeedback(null);
+    try {
+      const dynamicSpecies = await creatureResolver.fetchTrendingLiveCreatures(6);
+      if (dynamicSpecies.length > 0 && onAddCreatures) {
+        onAddCreatures(dynamicSpecies);
+        setLiveSearchFeedback(`Discovered & ingested ${dynamicSpecies.length} real-world species live from iNaturalist!`);
+      }
+    } catch (err) {
+      console.warn('Live discovery failed:', err);
+    } finally {
+      setIsDiscovering(false);
+    }
+  };
+
+  const handleLiveSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+
+    setIsSearchingLive(true);
+    setLiveSearchFeedback(null);
+    try {
+      const found = await creatureResolver.searchLiveCreatures(q, 4);
+      if (found.length > 0 && onAddCreatures) {
+        onAddCreatures(found);
+        setLiveSearchFeedback(`Ingested ${found.length} live records matching "${q}" from GBIF / iNaturalist / PBDB!`);
+      } else {
+        setLiveSearchFeedback(`No additional live species found matching "${q}".`);
+      }
+    } catch (err) {
+      console.warn('Live search error:', err);
+    } finally {
+      setIsSearchingLive(false);
+    }
+  };
 
   const filteredCreatures = useMemo(() => {
     return creatures
@@ -116,21 +159,24 @@ export function ExtinctionTimeline({ creatures, onSelectCreature }: ExtinctionTi
 
           {/* Search & Sort Controls */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Search Input */}
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              background: 'rgba(5, 11, 16, 0.6)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-full)',
-              padding: '6px 14px',
-              minWidth: '220px'
-            }}>
+            {/* Live Search Form */}
+            <form
+              onSubmit={handleLiveSearch}
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                background: 'rgba(5, 11, 16, 0.6)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-full)',
+                padding: '4px 6px 4px 14px',
+                minWidth: '240px'
+              }}
+            >
               <Search size={15} style={{ color: 'var(--text-muted)', marginRight: '8px' }} />
               <input
                 type="text"
-                placeholder="Search species or habitat..."
+                placeholder="Search local or live species..."
                 value={searchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                 style={{
@@ -144,7 +190,52 @@ export function ExtinctionTimeline({ creatures, onSelectCreature }: ExtinctionTi
                 }}
                 id="input-species-search"
               />
-            </div>
+              {searchQuery && (
+                <button
+                  type="submit"
+                  disabled={isSearchingLive}
+                  className="btn btn-primary"
+                  style={{
+                    fontSize: '0.75rem',
+                    padding: '4px 10px',
+                    borderRadius: 'var(--radius-full)',
+                    marginLeft: '6px',
+                    whiteSpace: 'nowrap'
+                  }}
+                  title="Search GBIF, iNaturalist, and PBDB"
+                >
+                  {isSearchingLive ? (
+                    <Loader2 size={12} className="animate-spin-slow" />
+                  ) : (
+                    <Globe size={12} />
+                  )}
+                  <span>Live</span>
+                </button>
+              )}
+            </form>
+
+            {/* Discover Live Species Button */}
+            <button
+              onClick={handleDiscoverLive}
+              disabled={isDiscovering}
+              className="btn btn-secondary"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 16px',
+                fontSize: '0.85rem',
+                borderRadius: 'var(--radius-full)'
+              }}
+              id="btn-discover-live"
+            >
+              {isDiscovering ? (
+                <Loader2 size={15} className="animate-spin-slow" style={{ color: 'var(--accent-primary)' }} />
+              ) : (
+                <Compass size={15} style={{ color: 'var(--accent-primary)' }} />
+              )}
+              <span>{isDiscovering ? 'Ingesting Live Species...' : 'Discover Live Species'}</span>
+            </button>
 
             {/* Sort Select */}
             <div style={{
@@ -179,6 +270,36 @@ export function ExtinctionTimeline({ creatures, onSelectCreature }: ExtinctionTi
             </div>
           </div>
         </div>
+
+        {/* Live Search Notification Banner */}
+        {liveSearchFeedback && (
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              background: 'rgba(0, 240, 255, 0.08)',
+              border: '1px solid var(--accent-primary)',
+              borderRadius: 'var(--radius-md)',
+              padding: '10px 16px',
+              marginBottom: '20px',
+              fontSize: '0.85rem',
+              color: 'var(--text-primary)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Globe size={16} style={{ color: 'var(--accent-primary)' }} />
+              <span>{liveSearchFeedback}</span>
+            </div>
+            <button
+              onClick={() => setLiveSearchFeedback(null)}
+              className="btn btn-ghost"
+              style={{ fontSize: '0.75rem', padding: '2px 6px' }}
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Results Count */}
         <div style={{
@@ -226,19 +347,39 @@ export function ExtinctionTimeline({ creatures, onSelectCreature }: ExtinctionTi
             gap: '16px'
           }}>
             <Filter size={40} style={{ color: 'var(--text-muted)' }} />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>No organisms match your filter criteria</h3>
-            <p style={{ color: 'var(--text-secondary)', maxWidth: '400px', fontSize: '0.9rem' }}>
-              Try searching for a different keyword or reset your era selection.
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>
+              {searchQuery ? `No local species found for "${searchQuery}"` : 'No organisms match your filter criteria'}
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', maxWidth: '480px', fontSize: '0.9rem' }}>
+              {searchQuery
+                ? `You can query global scientific databases (iNaturalist, GBIF, Paleobiology Database) to ingest "${searchQuery}" into your explorer dynamically.`
+                : 'Try searching for a different keyword or reset your era selection.'}
             </p>
-            <button
-              className="btn btn-secondary"
-              onClick={() => {
-                setSelectedEra('all');
-                setSearchQuery('');
-              }}
-            >
-              Reset All Filters
-            </button>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {searchQuery && (
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleLiveSearch()}
+                  disabled={isSearchingLive}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  {isSearchingLive ? <Loader2 size={16} className="animate-spin-slow" /> : <Globe size={16} />}
+                  <span>Search Worldwide Live Biodiversity</span>
+                </button>
+              )}
+
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  setSelectedEra('all');
+                  setSearchQuery('');
+                  setLiveSearchFeedback(null);
+                }}
+              >
+                Reset All Filters
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sparkles, Bot, ExternalLink, Ruler, Scale, ShieldAlert, Award, Loader2 } from 'lucide-react';
 import { chromeAI } from '../../services/ai/chromeAIService';
+import { creatureResolver } from '../../services/resolver/creatureResolver';
 import type { Creature } from '../../types/creature';
+import type { NormalizedCreature } from '../../types/normalizedCreature';
 import type { TaxonomyTranslation } from '../../types/ai';
 
 interface OverviewTabProps {
@@ -11,6 +13,17 @@ interface OverviewTabProps {
 export function OverviewTab({ creature }: OverviewTabProps) {
   const [aiSummary, setAiSummary] = useState<TaxonomyTranslation | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [normalized, setNormalized] = useState<NormalizedCreature | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    creatureResolver.resolve(creature).then((data) => {
+      if (isMounted) setNormalized(data);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [creature.id, creature.scientificName]);
 
   const handleSimplify = async () => {
     setIsLoadingAI(true);
@@ -210,6 +223,41 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                   {name}
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Verified Provenance & Data Sources */}
+      {normalized && normalized.sources.length > 0 && (
+        <div>
+          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '10px', color: 'var(--text-secondary)' }}>
+            Scientific Provenance & Open Data Sources
+          </h4>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {normalized.sources.map((src, i) => (
+              <a
+                key={i}
+                href={src.recordUrl || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '4px 10px',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-secondary)',
+                  textDecoration: 'none'
+                }}
+              >
+                <span style={{ fontWeight: 700, color: 'var(--accent-primary)' }}>{src.provider}</span>
+                {src.license && <span style={{ opacity: 0.65 }}>({src.license})</span>}
+                <ExternalLink size={11} />
+              </a>
             ))}
           </div>
         </div>

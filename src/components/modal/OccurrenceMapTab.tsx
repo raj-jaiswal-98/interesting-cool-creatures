@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Globe, Loader2 } from 'lucide-react';
-import { fetchGBIFCoordinates } from '../../services/api/gbifService';
+import { creatureResolver } from '../../services/resolver/creatureResolver';
+import { renderWorldMapCanvas, projectEquirectangular } from './worldMapData';
 import type { Creature, CreatureCoordinate } from '../../types/creature';
 
 interface OccurrenceMapTabProps {
@@ -13,38 +14,47 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isExtinct = creature.extinctionYear !== null;
 
-  // Fetch live GBIF coordinates if creature doesn't have many
+  // Fetch live PBDB fossil or GBIF coordinates
   useEffect(() => {
     let isMounted = true;
 
-    async function loadGBIF() {
+    async function loadOccurrences() {
       setIsLoading(true);
       try {
-        const gbifPoints = await fetchGBIFCoordinates(creature.scientificName, 15);
-        if (isMounted) {
-          // Merge unique coordinates
+        const points = await creatureResolver.resolveOccurrences(creature, 25);
+        if (isMounted && points.length > 0) {
+          // Merge unique coordinates with baseline catalog points
           const combined = [...(creature.coordinates || [])];
-          gbifPoints.forEach((pt) => {
+          points.forEach((pt) => {
             const exists = combined.some(
               (c) => Math.abs(c.lat - pt.lat) < 0.1 && Math.abs(c.lng - pt.lng) < 0.1
             );
-            if (!exists) combined.push(pt);
+            if (!exists) {
+              combined.push({
+                lat: pt.lat,
+                lng: pt.lng,
+                country: pt.country || 'Geographic Specimen Site',
+                year: pt.year,
+                basisOfRecord: pt.basisOfRecord
+              });
+            }
           });
           setCoordinates(combined);
         }
       } catch (err) {
-        console.warn('GBIF occurrence load failed:', err);
+        console.warn('Occurrence resolution failed:', err);
       } finally {
         if (isMounted) setIsLoading(false);
       }
     }
 
-    loadGBIF();
+    loadOccurrences();
     return () => {
       isMounted = false;
     };
-  }, [creature.scientificName]);
+  }, [creature.scientificName, creature.id]);
 
   // Draw 2D Equirectangular World Map and Occurrence Pins
   useEffect(() => {
@@ -57,61 +67,26 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
 
     ctx.clearRect(0, 0, width, height);
 
-    // Background ocean fill
-    ctx.fillStyle = '#06111B';
-    ctx.fillRect(0, 0, width, height);
+    // 1. Draw World Continents & Grid
+    renderWorldMapCanvas(ctx, width, height, '#00F0FF');
 
-    // Draw Subtle Latitude & Longitude Grid Lines
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.lineWidth = 1;
-
-    // Meridians
-    for (let x = 0; x <= width; x += width / 12) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
-    // Parallels
-    for (let y = 0; y <= height; y += height / 6) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
-    }
-
-    // Draw Equator & Prime Meridian with slightly higher opacity
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
-    ctx.beginPath();
-    ctx.moveTo(0, height / 2);
-    ctx.lineTo(width, height / 2);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(width / 2, 0);
-    ctx.lineTo(width / 2, height);
-    ctx.stroke();
-
-    // Plot occurrence points
+    // 2. Plot occurrence points with radiant glowing halos
     coordinates.forEach((pt, idx) => {
-      // Equirectangular projection
-      const x = ((pt.lng + 180) / 360) * width;
-      const y = ((90 - pt.lat) / 180) * height;
-
+      const [x, y] = projectEquirectangular(pt.lng, pt.lat, width, height);
       const isHovered = hoveredPoint === idx || selectedPoint === idx;
 
       // Glow halo
       ctx.beginPath();
-      ctx.arc(x, y, isHovered ? 12 : 7, 0, Math.PI * 2);
-      ctx.fillStyle = isHovered ? 'rgba(0, 240, 255, 0.35)' : 'rgba(0, 240, 255, 0.2)';
+      ctx.arc(x, y, isHovered ? 13 : 7, 0, Math.PI * 2);
+      ctx.fillStyle = isHovered ? 'rgba(0, 240, 255, 0.45)' : 'rgba(0, 240, 255, 0.22)';
       ctx.fill();
 
       // Pin core
       ctx.beginPath();
-      ctx.arc(x, y, isHovered ? 5 : 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = isHovered ? '#FFFFFF' : 'var(--accent-primary, #00F0FF)';
-      ctx.shadowBlur = isHovered ? 15 : 8;
-      ctx.shadowColor = 'var(--accent-primary, #00F0FF)';
+      ctx.arc(x, y, isHovered ? 5.5 : 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = isHovered ? '#FFFFFF' : '#00F0FF';
+      ctx.shadowBlur = isHovered ? 18 : 8;
+      ctx.shadowColor = '#00F0FF';
       ctx.fill();
       ctx.shadowBlur = 0;
     });
@@ -128,8 +103,7 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
 
     let foundIdx: number | null = null;
     coordinates.forEach((pt, idx) => {
-      const x = ((pt.lng + 180) / 360) * canvas.width;
-      const y = ((90 - pt.lat) / 180) * canvas.height;
+      const [x, y] = projectEquirectangular(pt.lng, pt.lat, canvas.width, canvas.height);
       const dist = Math.hypot(mouseX - x, mouseY - y);
       if (dist < 15) {
         foundIdx = idx;
@@ -162,7 +136,7 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
         {isLoading && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--accent-primary)' }}>
             <Loader2 size={14} className="animate-spin-slow" />
-            <span>Querying GBIF...</span>
+            <span>{isExtinct ? 'Querying PBDB fossil records...' : 'Querying GBIF occurrences...'}</span>
           </div>
         )}
       </div>
