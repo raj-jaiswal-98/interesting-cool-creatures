@@ -9,9 +9,11 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
+    "build:embeddings": "tsx scripts/buildEmbeddings.ts",
     "verify-apis": "tsx scripts/verify-apis.ts"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.3.0",
     "@tanstack/react-query": "^5.66.0",
     "canvas-confetti": "^1.9.4",
     "colorthief": "^2.6.0",

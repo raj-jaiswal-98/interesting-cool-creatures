@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, SlidersHorizontal, Sparkles, Globe, Loader2, Compass } from 'lucide-react';
+import { Search, Filter, SlidersHorizontal, Sparkles, Globe, Loader2, Compass, Cpu, Zap } from 'lucide-react';
 import { TimelineNodeCard } from './TimelineNodeCard';
 import { AddMoreCard } from './AddMoreCard';
 import { creatureResolver } from '../../services/resolver/creatureResolver';
+import { useCreatureSearch } from '../../hooks/useCreatureSearch';
+import { useSemanticRerank, useEmbeddingStatus } from '../../hooks/useSemanticRerank';
 import type { Creature } from '../../types/creature';
 
 type SortOption = 'chronology-asc' | 'chronology-desc' | 'danger' | 'name';
@@ -39,8 +41,6 @@ const ERAS = [
   { id: 'Modern', label: 'Modern Extant' }
 ];
 
-import { useCreatureSearch } from '../../hooks/useCreatureSearch';
-
 export function ExtinctionTimeline({
   creatures,
   onSelectCreature,
@@ -59,11 +59,21 @@ export function ExtinctionTimeline({
   const [isGlobalSimplified, setIsGlobalSimplified] = useState(false);
 
   // Hook integrating lexical + on-device semantic intent search
-  const { results: searchedCreatures, intent: searchIntent, isSearching: isSemanticSearching } = useCreatureSearch(
+  const { results: lexicalCreatures, intent: searchIntent, isSearching: isSemanticSearching } = useCreatureSearch(
     creatures,
     searchQuery,
     { activeEra: selectedEra }
   );
+
+  // Client-side neural vector re-ranking with Transformers.js MiniLM
+  const searchedCreatures = useSemanticRerank(
+    creatures,
+    lexicalCreatures,
+    searchQuery,
+    selectedEra
+  );
+
+  const embeddingStatus = useEmbeddingStatus();
 
   const handleDiscoverLive = async () => {
     setIsDiscovering(true);
@@ -366,6 +376,24 @@ export function ExtinctionTimeline({
                       }}
                     >
                       size: {searchIntent.size}
+                    </span>
+                  )}
+                  {searchQuery && embeddingStatus === 'ready' && (
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        background: 'rgba(235, 255, 0, 0.1)',
+                        border: '1px solid rgba(235, 255, 0, 0.4)',
+                        color: 'var(--text-primary)',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px'
+                      }}
+                      title="Neural vector embeddings re-ranking query results"
+                    >
+                      <Zap size={9} style={{ color: '#ebff00' }} /> MiniLM RRF
                     </span>
                   )}
                 </div>
