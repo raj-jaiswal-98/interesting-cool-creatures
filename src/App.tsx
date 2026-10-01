@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Dna, Globe2, Cpu } from 'lucide-react';
+import { Dna, Globe2, Cpu, Radio } from 'lucide-react';
 import { CREATURE_CATALOG } from './data/creatureCatalog';
 import { getDailySpotlightCreature } from './utils/seedGenerator';
 import { themeEngine } from './services/theme/themeEngine';
@@ -9,6 +9,7 @@ import { SpotlightHero } from './components/hero/SpotlightHero';
 import { ExtinctionTimeline } from './components/timeline/ExtinctionTimeline';
 import { CreatureModal } from './components/modal/CreatureModal';
 import { chromeAI } from './services/ai/chromeAIService';
+import { creatureResolver } from './services/resolver/creatureResolver';
 import type { Creature } from './types/creature';
 import type { AIAvailabilityStatus } from './types/ai';
 
@@ -22,9 +23,12 @@ const queryClient = new QueryClient({
 });
 
 export function AppContent() {
+  const [catalog, setCatalog] = useState<Creature[]>(CREATURE_CATALOG);
   const [spotlightCreature, setSpotlightCreature] = useState<Creature | null>(null);
   const [selectedCreature, setSelectedCreature] = useState<Creature | null>(null);
   const [aiStatus, setAiStatus] = useState<AIAvailabilityStatus | 'checking'>('checking');
+  const [isLiveSyncing, setIsLiveSyncing] = useState<boolean>(false);
+  const [liveAddedCount, setLiveAddedCount] = useState<number>(0);
 
   useEffect(() => {
     const daily = getDailySpotlightCreature(CREATURE_CATALOG);
@@ -38,7 +42,66 @@ export function AppContent() {
     chromeAI.checkAvailability().then((status) => {
       setAiStatus(status);
     });
+
+    // Ingest dynamic research-grade organisms live from iNaturalist & GBIF
+    setIsLiveSyncing(true);
+    creatureResolver
+      .fetchTrendingLiveCreatures(8)
+      .then((liveCreatures) => {
+        if (liveCreatures.length > 0) {
+          setCatalog((prev) => {
+            const existingIds = new Set(prev.map((c) => c.id.toLowerCase()));
+            const unique = liveCreatures.filter((c) => !existingIds.has(c.id.toLowerCase()));
+            setLiveAddedCount(unique.length);
+            return [...prev, ...unique];
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('Initial live species sync deferred:', err);
+      })
+      .finally(() => {
+        setIsLiveSyncing(false);
+      });
   }, []);
+
+  const [isPureLiveMode, setIsPureLiveMode] = useState<boolean>(false);
+
+  const handleTogglePureLiveMode = async () => {
+    if (!isPureLiveMode) {
+      setIsLiveSyncing(true);
+      try {
+        const pureLive = await creatureResolver.fetchTrendingLiveCreatures(12);
+        if (pureLive.length > 0) {
+          setCatalog(pureLive);
+          setSpotlightCreature(pureLive[0]);
+          themeEngine.applyCreatureTheme(pureLive[0].photoUrl, pureLive[0].themePalette);
+          setIsPureLiveMode(true);
+          setLiveAddedCount(pureLive.length);
+        }
+      } catch (err) {
+        console.warn('Failed to switch to pure live stream:', err);
+      } finally {
+        setIsLiveSyncing(false);
+      }
+    } else {
+      setCatalog(CREATURE_CATALOG);
+      const daily = getDailySpotlightCreature(CREATURE_CATALOG);
+      setSpotlightCreature(daily);
+      if (daily) themeEngine.applyCreatureTheme(daily.photoUrl, daily.themePalette);
+      setIsPureLiveMode(false);
+      setLiveAddedCount(0);
+    }
+  };
+
+  const handleAddDynamicCreatures = (newCreatures: Creature[]) => {
+    setCatalog((prev) => {
+      const existingIds = new Set(prev.map((c) => c.id.toLowerCase()));
+      const unique = newCreatures.filter((c) => !existingIds.has(c.id.toLowerCase()));
+      setLiveAddedCount((count) => count + unique.length);
+      return [...prev, ...unique];
+    });
+  };
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -98,7 +161,7 @@ export function AppContent() {
           </div>
 
           {/* Quick Metrics & AI Status Badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -111,7 +174,55 @@ export function AppContent() {
               color: 'var(--text-secondary)'
             }}>
               <Globe2 size={14} style={{ color: 'var(--accent-primary)' }} />
-              <span>{CREATURE_CATALOG.length} Species Cataloged</span>
+              <span>
+                {catalog.length} Species{' '}
+                {isPureLiveMode ? (
+                  <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>
+                    (100% Live Stream)
+                  </span>
+                ) : liveAddedCount > 0 ? (
+                  <span style={{ color: 'var(--accent-primary)', fontWeight: 700 }}>
+                    (+{liveAddedCount} Live Synced)
+                  </span>
+                ) : (
+                  'Cataloged'
+                )}
+              </span>
+            </div>
+
+            <button
+              onClick={handleTogglePureLiveMode}
+              disabled={isLiveSyncing}
+              className="btn btn-secondary"
+              style={{
+                fontSize: '0.78rem',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-full)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: isPureLiveMode ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
+                background: isPureLiveMode ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)'
+              }}
+              title="Toggle between scientific archive and 100% dynamically fetched live organisms"
+            >
+              <Radio size={14} style={{ color: isPureLiveMode ? 'var(--accent-primary)' : 'var(--text-muted)' }} />
+              <span>{isPureLiveMode ? 'Mode: 100% Live Stream' : 'Switch to Pure Live Feed'}</span>
+            </button>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: isLiveSyncing ? 'rgba(0, 240, 255, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+              border: `1px solid ${isLiveSyncing ? 'rgba(0, 240, 255, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+              padding: '6px 12px',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.78rem',
+              color: isLiveSyncing ? '#38BDF8' : '#34D399'
+            }}>
+              <Radio size={14} className={isLiveSyncing ? 'animate-pulse' : ''} />
+              <span>{isLiveSyncing ? 'Syncing Live Biodiversity...' : 'Live Stream Active'}</span>
             </div>
 
             <div style={{
@@ -142,8 +253,9 @@ export function AppContent() {
 
         {/* Evolutionary Timeline & Filterable Catalog */}
         <ExtinctionTimeline
-          creatures={CREATURE_CATALOG}
+          creatures={catalog}
           onSelectCreature={(c: Creature) => setSelectedCreature(c)}
+          onAddCreatures={handleAddDynamicCreatures}
         />
       </main>
 
