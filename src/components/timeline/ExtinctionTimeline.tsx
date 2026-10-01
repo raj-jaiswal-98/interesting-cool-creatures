@@ -27,6 +27,8 @@ const ERAS = [
   { id: 'Modern', label: 'Modern Extant' }
 ];
 
+import { useCreatureSearch } from '../../hooks/useCreatureSearch';
+
 export function ExtinctionTimeline({
   creatures,
   onSelectCreature,
@@ -41,6 +43,13 @@ export function ExtinctionTimeline({
   const [isSearchingLive, setIsSearchingLive] = useState(false);
   const [liveSearchFeedback, setLiveSearchFeedback] = useState<string | null>(null);
   const [isGlobalSimplified, setIsGlobalSimplified] = useState(false);
+
+  // Hook integrating lexical + on-device semantic intent search
+  const { results: searchedCreatures, intent: searchIntent, isSearching: isSemanticSearching } = useCreatureSearch(
+    creatures,
+    searchQuery,
+    { activeEra: selectedEra }
+  );
 
   const handleDiscoverLive = async () => {
     setIsDiscovering(true);
@@ -81,39 +90,27 @@ export function ExtinctionTimeline({
   };
 
   const filteredCreatures = useMemo(() => {
-    return creatures
-      .filter((c) => {
-        const matchesEra = selectedEra === 'all' || c.era.toLowerCase() === selectedEra.toLowerCase();
-        const q = searchQuery.toLowerCase().trim();
-        const matchesQuery =
-          !q ||
-          c.commonName.toLowerCase().includes(q) ||
-          c.scientificName.toLowerCase().includes(q) ||
-          c.habitat.toLowerCase().includes(q) ||
-          (c.diet && c.diet.toLowerCase().includes(q));
+    return [...searchedCreatures].sort((a, b) => {
+      if (sortBy === 'chronology-asc') {
+        const yearA = a.extinctionYear === null ? 2026 : a.extinctionYear;
+        const yearB = b.extinctionYear === null ? 2026 : b.extinctionYear;
+        return yearA - yearB;
+      }
+      if (sortBy === 'chronology-desc') {
+        const yearA = a.extinctionYear === null ? 2026 : a.extinctionYear;
+        const yearB = b.extinctionYear === null ? 2026 : b.extinctionYear;
+        return yearB - yearA;
+      }
+      if (sortBy === 'danger') {
+        return (b.stats?.dangerLevel || 0) - (a.stats?.dangerLevel || 0);
+      }
+      if (sortBy === 'name') {
+        return a.commonName.localeCompare(b.commonName);
+      }
+      return 0;
+    });
+  }, [searchedCreatures, sortBy]);
 
-        return matchesEra && matchesQuery;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'chronology-asc') {
-          const yearA = a.extinctionYear === null ? 2026 : a.extinctionYear;
-          const yearB = b.extinctionYear === null ? 2026 : b.extinctionYear;
-          return yearA - yearB;
-        }
-        if (sortBy === 'chronology-desc') {
-          const yearA = a.extinctionYear === null ? 2026 : a.extinctionYear;
-          const yearB = b.extinctionYear === null ? 2026 : b.extinctionYear;
-          return yearB - yearA;
-        }
-        if (sortBy === 'danger') {
-          return (b.stats?.dangerLevel || 0) - (a.stats?.dangerLevel || 0);
-        }
-        if (sortBy === 'name') {
-          return a.commonName.localeCompare(b.commonName);
-        }
-        return 0;
-      });
-  }, [creatures, selectedEra, searchQuery, sortBy]);
 
   return (
     <section style={{ position: 'relative', zIndex: 1, padding: '40px 0 80px' }} id="timeline-catalog">
@@ -172,60 +169,110 @@ export function ExtinctionTimeline({
 
           {/* Search & Sort Controls */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Live Search Form */}
-            <form
-              onSubmit={handleLiveSearch}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                background: 'rgba(5, 11, 16, 0.6)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-full)',
-                padding: '4px 6px 4px 14px',
-                minWidth: '240px'
-              }}
-            >
-              <Search size={15} style={{ color: 'var(--text-muted)', marginRight: '8px' }} />
-              <input
-                type="text"
-                placeholder="Search local or live species..."
-                value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+            {/* Live Search Form & Semantic Intent Badges */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <form
+                onSubmit={handleLiveSearch}
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.88rem',
-                  width: '100%',
-                  fontFamily: 'var(--font-display)'
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(5, 11, 16, 0.6)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '4px 6px 4px 14px',
+                  minWidth: '240px'
                 }}
-                id="input-species-search"
-              />
-              {searchQuery && (
-                <button
-                  type="submit"
-                  disabled={isSearchingLive}
-                  className="btn btn-primary"
+              >
+                <Search size={15} style={{ color: 'var(--text-muted)', marginRight: '8px' }} />
+                <input
+                  type="text"
+                  placeholder="Search species or prompt AI (e.g. 'alien deep sea')..."
+                  value={searchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                   style={{
-                    fontSize: '0.75rem',
-                    padding: '4px 10px',
-                    borderRadius: 'var(--radius-full)',
-                    marginLeft: '6px',
-                    whiteSpace: 'nowrap'
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.88rem',
+                    width: '100%',
+                    fontFamily: 'var(--font-display)'
                   }}
-                  title="Search GBIF, iNaturalist, and PBDB"
-                >
-                  {isSearchingLive ? (
-                    <Loader2 size={12} className="animate-spin-slow" />
-                  ) : (
-                    <Globe size={12} />
+                  id="input-species-search"
+                />
+                {searchQuery && (
+                  <button
+                    type="submit"
+                    disabled={isSearchingLive}
+                    className="btn btn-primary"
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      marginLeft: '6px',
+                      whiteSpace: 'nowrap'
+                    }}
+                    title="Search GBIF, iNaturalist, and PBDB"
+                  >
+                    {isSearchingLive ? (
+                      <Loader2 size={12} className="animate-spin-slow" />
+                    ) : (
+                      <Globe size={12} />
+                    )}
+                    <span>Live</span>
+                  </button>
+                )}
+              </form>
+
+              {searchIntent && (searchIntent.semanticConcepts.length > 0 || searchIntent.habitatType || searchIntent.size) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', paddingLeft: '8px' }}>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontWeight: 700 }}>AI Intent:</span>
+                  {searchIntent.semanticConcepts.map((concept, idx) => (
+                    <span
+                      key={idx}
+                      style={{
+                        fontSize: '0.65rem',
+                        background: 'rgba(0, 255, 102, 0.08)',
+                        border: '1px solid var(--accent-primary)',
+                        color: 'var(--text-primary)',
+                        padding: '1px 6px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      #{concept}
+                    </span>
+                  ))}
+                  {searchIntent.habitatType && (
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        color: 'var(--text-secondary)',
+                        padding: '1px 6px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      biome: {searchIntent.habitatType}
+                    </span>
                   )}
-                  <span>Live</span>
-                </button>
+                  {searchIntent.size && (
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        color: 'var(--text-secondary)',
+                        padding: '1px 6px',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      size: {searchIntent.size}
+                    </span>
+                  )}
+                </div>
               )}
-            </form>
+            </div>
+
 
             {/* Stream 100 Species / Ingest Button */}
             <button
