@@ -124,3 +124,69 @@ export function getCreatureFamilySummary(creature: Creature): string {
 
   return `${parts.join(' ')}.`;
 }
+
+export interface ScaleComparison {
+  label: string;
+  subtext: string;
+  humanHeightM: number;
+  creatureLengthM: number;
+  visualRatio: number;
+  icon: string;
+}
+
+/**
+ * Computes an intuitive human vs. creature scale comparison.
+ * Highlights micro-extremophiles, pocket organisms, and colossal megafauna.
+ */
+export function getCreatureHumanScale(creature: Creature): ScaleComparison {
+  const lengthM = creature.stats?.lengthMeters ?? 1;
+  const humanM = 1.8;
+
+  if (lengthM < 0.01) {
+    const mm = (lengthM * 1000).toFixed(1);
+    const timesSmaller = Math.round(humanM / lengthM);
+    return {
+      label: `Microscopic (${mm} mm)`,
+      subtext: `~${timesSmaller.toLocaleString()}× smaller than a human. Invisible to the naked eye.`,
+      humanHeightM: humanM,
+      creatureLengthM: lengthM,
+      visualRatio: 0.08,
+      icon: '🔬'
+    };
+  }
+
+  if (lengthM < 0.2) {
+    const cm = Math.round(lengthM * 100);
+    return {
+      label: `Pocket-sized (${cm} cm)`,
+      subtext: `About the size of a coin or pebble in your palm.`,
+      humanHeightM: humanM,
+      creatureLengthM: lengthM,
+      visualRatio: 0.18,
+      icon: '🪙'
+    };
+  }
+
+  if (lengthM <= 2.5) {
+    const ratio = (lengthM / humanM).toFixed(1);
+    return {
+      label: `Human scale (${lengthM} m)`,
+      subtext: `About ${ratio}× the size of an adult human (${humanM} m).`,
+      humanHeightM: humanM,
+      creatureLengthM: lengthM,
+      visualRatio: Math.min(0.75, Math.max(0.25, lengthM / 3.0)),
+      icon: '🧍'
+    };
+  }
+
+  const timesBigger = (lengthM / humanM).toFixed(1);
+  return {
+    label: `Colossal (${lengthM} m)`,
+    subtext: `Towering ~${timesBigger}× longer than an adult human.`,
+    humanHeightM: humanM,
+    creatureLengthM: lengthM,
+    visualRatio: 1.0,
+    icon: '🦕'
+  };
+}
+

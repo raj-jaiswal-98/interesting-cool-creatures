@@ -8,17 +8,19 @@ import {
   ShieldAlert,
   Award,
   Loader2,
-  MapPin,
-  Swords,
-  Dna,
   Compass,
   Layers,
-  BookOpen
+  BookOpen,
+  FileText
 } from 'lucide-react';
 import { chromeAI } from '../../services/ai/chromeAIService';
 import { creatureResolver } from '../../services/resolver/creatureResolver';
 import { getSimplifiedDossier } from '../../utils/creatureSimplifier';
-import { getCreatureFamilySummary } from '../../utils/personality';
+import {
+  getCreatureFamilySummary,
+  getCreatureHumanScale,
+  getCreaturePersonalityTags
+} from '../../utils/personality';
 import type { Creature } from '../../types/creature';
 import type { NormalizedCreature } from '../../types/normalizedCreature';
 import type { TaxonomyTranslation } from '../../types/ai';
@@ -28,16 +30,18 @@ interface OverviewTabProps {
   onSwitchTab?: (tab: 'map' | 'evolution' | 'clash') => void;
 }
 
-export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
+export function OverviewTab({ creature }: OverviewTabProps) {
   const [aiSummary, setAiSummary] = useState<TaxonomyTranslation | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [normalized, setNormalized] = useState<NormalizedCreature | null>(null);
-  const [isSimplified, setIsSimplified] = useState(false);
+  const [storyMode, setStoryMode] = useState<'story' | 'science' | 'ai'>('story');
   const [activeCuriousPrompt, setActiveCuriousPrompt] = useState<string | null>(null);
   const [curiousAnswer, setCuriousAnswer] = useState<string | null>(null);
   const [isLoadingCurious, setIsLoadingCurious] = useState(false);
 
   const dossier = getSimplifiedDossier(creature);
+  const humanScale = getCreatureHumanScale(creature);
+  const personalityTags = getCreaturePersonalityTags(creature);
   const isExtant = creature.extinctionYear === null;
   const eraClass = `badge-${creature.era.toLowerCase()}`;
 
@@ -78,12 +82,19 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
     try {
       const result = await chromeAI.translateTaxonomy(creature.description, creature.commonName);
       setAiSummary(result);
-      setIsSimplified(true);
+      setStoryMode('ai');
     } catch (err) {
       console.warn('AI summary failed:', err);
-      setIsSimplified(true);
+      setStoryMode('ai');
     } finally {
       setIsLoadingAI(false);
+    }
+  };
+
+  const handleSelectMode = (mode: 'story' | 'science' | 'ai') => {
+    setStoryMode(mode);
+    if (mode === 'ai' && !aiSummary && !isLoadingAI) {
+      handleSimplifyWithAI();
     }
   };
 
@@ -98,14 +109,14 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(280px, 340px) 1fr',
+        gridTemplateColumns: 'minmax(280px, 330px) 1fr',
         gap: '24px',
         alignItems: 'start'
       }}
       className="modal-two-columns"
     >
       {/* ========================================================
-          COLUMN 1 (LEFT): SPECIMEN PHOTOGRAPHY & TELEMETRY
+          COLUMN 1 (LEFT): CINEMATIC SPECIMEN PLAQUE & SCALE
           ======================================================== */}
       <div
         style={{
@@ -114,8 +125,9 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
           gap: '14px',
           background: '#090A0D',
           border: '1.5px solid var(--brutalist-border)',
-          borderRadius: '8px',
-          padding: '16px'
+          borderRadius: 'var(--radius-card)',
+          padding: '16px',
+          boxShadow: 'var(--shadow-card)'
         }}
       >
         {/* Specimen Photograph Frame */}
@@ -123,8 +135,8 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
           style={{
             position: 'relative',
             width: '100%',
-            height: '240px',
-            borderRadius: '6px',
+            height: '260px',
+            borderRadius: '12px',
             overflow: 'hidden',
             border: '1.5px solid rgba(255, 255, 255, 0.16)',
             background: '#040507',
@@ -138,7 +150,8 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
             style={{
               width: '100%',
               height: '100%',
-              objectFit: 'cover'
+              objectFit: 'cover',
+              transition: 'transform 0.4s ease'
             }}
             onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
               e.currentTarget.src = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80';
@@ -164,7 +177,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.66rem',
                 padding: '3px 8px',
-                borderRadius: '3px',
+                borderRadius: 'var(--radius-button)',
                 borderWidth: '1.5px'
               }}
             >
@@ -177,7 +190,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.66rem',
                 padding: '3px 8px',
-                borderRadius: '3px',
+                borderRadius: 'var(--radius-button)',
                 backdropFilter: 'blur(8px)'
               }}
             >
@@ -185,7 +198,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
             </span>
           </div>
 
-          {/* Bottom Bar Reference */}
+          {/* Bottom Floating Personality Chips */}
           <div
             style={{
               position: 'absolute',
@@ -193,48 +206,49 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               left: '10px',
               right: '10px',
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
+              gap: '4px',
+              flexWrap: 'wrap',
               zIndex: 2
             }}
           >
-            <span
-              style={{
-                background: 'rgba(0,0,0,0.85)',
-                border: '1px solid rgba(255,255,255,0.18)',
-                padding: '2px 6px',
-                borderRadius: '3px',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.62rem',
-                color: 'var(--text-secondary)'
-              }}
-            >
-              SPECIMEN #{creature.id.slice(0, 8).toUpperCase()}
-            </span>
+            {personalityTags.map((tag, idx) => (
+              <span
+                key={idx}
+                className="personality-tag"
+                style={{
+                  fontSize: '0.68rem',
+                  padding: '2px 8px',
+                  background: 'rgba(5, 11, 16, 0.85)',
+                  backdropFilter: 'blur(6px)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.6)'
+                }}
+              >
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
 
         {/* Specimen Vitals List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {/* Threat Rating Bar */}
           <div
             style={{
               background: 'rgba(0, 0, 0, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '4px',
-              padding: '10px'
+              borderRadius: '8px',
+              padding: '10px 12px'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
                 <ShieldAlert size={13} style={{ color: threatColor }} />
-                <span>THREAT RATING</span>
+                <span>THREAT LEVEL</span>
               </div>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.84rem', fontWeight: 800, color: threatColor }}>
                 {creature.stats?.dangerLevel || 5} / 10
               </span>
             </div>
-            {/* Visual Danger Gauge */}
             <div style={{ width: '100%', height: '5px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
               <div
                 style={{
@@ -247,9 +261,9 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
             </div>
           </div>
 
-          {/* Rarity & Habitat Chips */}
+          {/* Rarity & Observation Chips */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            <div className="brutalist-data-chip" style={{ padding: '8px' }}>
+            <div className="brutalist-data-chip" style={{ padding: '8px 10px', borderRadius: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-muted)', fontSize: '0.64rem' }}>
                 <Award size={12} style={{ color: 'var(--accent-primary)' }} />
                 <span>RARITY SCORE</span>
@@ -259,63 +273,88 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               </span>
             </div>
 
-            <div className="brutalist-data-chip" style={{ padding: '8px' }}>
+            <div className="brutalist-data-chip" style={{ padding: '8px 10px', borderRadius: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-muted)', fontSize: '0.64rem' }}>
                 <Compass size={12} style={{ color: 'var(--accent-primary)' }} />
-                <span>OBSERVATIONS</span>
+                <span>SIGHTINGS</span>
               </div>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                 {creature.coordinates?.length || 1} Sites
               </span>
             </div>
           </div>
-        </div>
 
-        {/* Quick Navigation Action Buttons (Icons with Label Text) */}
-        {onSwitchTab && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-            <button
-              type="button"
-              onClick={() => onSwitchTab('map')}
-              className="btn-subtle-brutalist"
-              style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 12px' }}
-            >
-              <MapPin size={13} style={{ color: 'var(--accent-primary)' }} />
-              <span>Where it's been seen →</span>
-            </button>
+          {/* Human Scale Comparison Bar */}
+          <div
+            style={{
+              background: 'rgba(0, 0, 0, 0.45)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '8px',
+              padding: '12px'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <span>{humanScale.icon}</span>
+                <span>HUMAN SCALE</span>
+              </div>
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
+                {humanScale.label}
+              </span>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => onSwitchTab('clash')}
-              className="btn-subtle-brutalist"
-              style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 12px' }}
-            >
-              <Swords size={13} style={{ color: '#FFB800' }} />
-              <span>Who wins? (Battle) →</span>
-            </button>
+            {/* Proportional visual bar */}
+            <div style={{
+              position: 'relative',
+              height: '18px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '6px',
+              margin: '8px 0 6px',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <div
+                style={{
+                  width: `${Math.round(humanScale.visualRatio * 100)}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, rgba(0, 240, 255, 0.25) 0%, var(--accent-primary) 100%)',
+                  borderRadius: '5px',
+                  transition: 'width 0.4s ease'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                left: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.65rem',
+                fontWeight: 800,
+                color: '#FFFFFF',
+                textShadow: '0 1px 3px rgba(0,0,0,0.8)'
+              }}>
+                <span>🧍 1.8m Human</span>
+              </div>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => onSwitchTab('evolution')}
-              className="btn-subtle-brutalist"
-              style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 12px' }}
-            >
-              <Dna size={13} style={{ color: '#A855F7' }} />
-              <span>Imagine future form →</span>
-            </button>
+            <p style={{ margin: 0, fontSize: '0.74rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+              {humanScale.subtext}
+            </p>
           </div>
-        )}
+        </div>
       </div>
 
       {/* ========================================================
-          COLUMN 2 (RIGHT): USEFUL SCIENTIFIC INFORMATION
+          COLUMN 2 (RIGHT): STORY-FIRST PLAQUE & EXPLORATION
           ======================================================== */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-        {/* Title & Classification */}
+        {/* Title & Humanized Lineage */}
         <div>
           <h3
             style={{
-              fontSize: '1.6rem',
+              fontSize: '1.65rem',
               fontWeight: 900,
               letterSpacing: '-0.02em',
               color: 'var(--text-primary)',
@@ -344,8 +383,8 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
                   fontSize: '0.7rem',
                   color: 'var(--text-muted)',
                   background: 'rgba(255, 255, 255, 0.05)',
-                  padding: '2px 6px',
-                  borderRadius: '3px',
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-button)',
                   border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}
               >
@@ -368,92 +407,158 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
           </div>
         </div>
 
-        {/* AI & Plain-English Communicator Banner with Subtle Action Button */}
+        {/* Story-First Museum Plaque with Mode Switcher */}
         <div
           style={{
             background: 'rgba(0, 0, 0, 0.5)',
-            border: isSimplified ? '1.5px solid var(--accent-primary)' : '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: '6px',
-            padding: '14px',
-            transition: 'border-color 0.2s ease'
+            border: storyMode === 'story'
+              ? '1.5px solid var(--accent-primary)'
+              : '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: 'var(--radius-card)',
+            padding: '16px',
+            transition: 'border-color 0.2s ease',
+            boxShadow: 'var(--shadow-card)'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '8px' }}>
+          {/* Plaque Header & Mode Buttons */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
+            gap: '8px',
+            flexWrap: 'wrap'
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Sparkles size={14} style={{ color: 'var(--accent-primary)' }} />
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-primary)' }}>
-                {isSimplified ? '⚡ SIMPLIFIED COMMUNICATOR (PLAIN ENGLISH)' : '🔬 SCIENTIFIC INTELLIGENCE'}
+              <Sparkles size={15} style={{ color: 'var(--accent-primary)' }} />
+              <span style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                color: 'var(--text-primary)',
+                letterSpacing: '0.04em'
+              }}>
+                {storyMode === 'story'
+                  ? '✨ Field Dossier (Plain English)'
+                  : storyMode === 'science'
+                  ? '🔬 Original Scientific Text'
+                  : '🤖 AI Synthesized Plaque'}
               </span>
             </div>
 
-            {/* Subtle Button (Icon with Label Text) */}
+            {/* Mode Selector Buttons */}
             <div style={{ display: 'flex', gap: '6px' }}>
               <button
                 type="button"
-                onClick={() => setIsSimplified(!isSimplified)}
-                className={`btn-subtle-brutalist ${isSimplified ? 'active' : ''}`}
-                style={{ padding: '4px 8px', fontSize: '0.68rem' }}
-                title="Toggle plain-English breakdown"
+                onClick={() => handleSelectMode('story')}
+                className={`btn-subtle-brutalist ${storyMode === 'story' ? 'active' : ''}`}
+                style={{ padding: '4px 10px', fontSize: '0.72rem', borderRadius: 'var(--radius-button)' }}
+                title="Read accessible field dossier"
               >
-                {isSimplified ? <BookOpen size={11} /> : <Sparkles size={11} />}
-                <span>{isSimplified ? 'Scientific' : 'Simplify'}</span>
+                <BookOpen size={11} />
+                <span>Story</span>
               </button>
 
               <button
                 type="button"
-                onClick={handleSimplifyWithAI}
+                onClick={() => handleSelectMode('science')}
+                className={`btn-subtle-brutalist ${storyMode === 'science' ? 'active' : ''}`}
+                style={{ padding: '4px 10px', fontSize: '0.72rem', borderRadius: 'var(--radius-button)' }}
+                title="View original academic taxonomy"
+              >
+                <FileText size={11} />
+                <span>Science</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectMode('ai')}
                 disabled={isLoadingAI}
-                className="btn-subtle-brutalist"
-                style={{ padding: '4px 8px', fontSize: '0.68rem' }}
-                title="Run Gemini Nano on-device AI translation"
+                className={`btn-subtle-brutalist ${storyMode === 'ai' ? 'active' : ''}`}
+                style={{ padding: '4px 10px', fontSize: '0.72rem', borderRadius: 'var(--radius-button)' }}
+                title="Generate fresh on-device museum plaque"
               >
                 {isLoadingAI ? <Loader2 size={11} className="animate-spin-slow" /> : <Bot size={11} />}
-                <span>{isLoadingAI ? 'Processing...' : 'AI Translate'}</span>
+                <span>{isLoadingAI ? 'Thinking...' : 'AI Plaque'}</span>
               </button>
             </div>
           </div>
 
-          {/* Description Content */}
-          {aiSummary ? (
-            <div style={{ fontSize: '0.88rem', lineHeight: 1.55, color: '#F1F5F9' }}>
-              <p style={{ margin: '0 0 6px' }}>"{aiSummary.text}"</p>
-              <span style={{ fontSize: '0.68rem', color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
-                ✓ {aiSummary.isNativeAI ? 'Generated on-device via Gemini Nano' : 'Synthesized via Natural Science Communicator'}
+          {/* Plaque Body */}
+          {storyMode === 'story' ? (
+            <div style={{ fontSize: '0.9rem', lineHeight: 1.55, color: '#F1F5F9' }}>
+              {/* Bold Headline Quote */}
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: 800,
+                color: 'var(--accent-primary)',
+                marginBottom: '10px',
+                lineHeight: 1.4,
+                fontStyle: 'italic'
+              }}>
+                "{dossier.headline}"
+              </div>
+
+              {/* Story Highlights */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.86rem' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ fontSize: '1rem', lineHeight: 1 }}>⚡</span>
+                  <div>
+                    <strong style={{ color: '#FFFFFF' }}>Superpower: </strong>
+                    <span style={{ color: 'var(--text-secondary)' }}>{dossier.superpower}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ fontSize: '1rem', lineHeight: 1 }}>💡</span>
+                  <div>
+                    <strong style={{ color: '#FFFFFF' }}>Did you know? </strong>
+                    <span style={{ color: 'var(--text-secondary)' }}>{dossier.funFact}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ fontSize: '1rem', lineHeight: 1 }}>📏</span>
+                  <div>
+                    <strong style={{ color: '#FFFFFF' }}>Real scale: </strong>
+                    <span style={{ color: 'var(--text-secondary)' }}>{dossier.sizeComparison}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : storyMode === 'science' ? (
+            <div style={{ fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+              <p style={{ margin: '0 0 8px' }}>{creature.description}</p>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                Source: Primary biological record & peer-reviewed paleontology archives.
               </span>
             </div>
-          ) : isSimplified ? (
-            <div style={{ fontSize: '0.86rem', lineHeight: 1.5, color: '#F1F5F9' }}>
-              <div style={{ fontWeight: 700, color: 'var(--text-accent)', marginBottom: '4px' }}>
-                {dossier.headline}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                <div>
-                  <strong style={{ color: '#F8FAFC' }}>Superpower: </strong>
-                  {dossier.superpower}
-                </div>
-                <div>
-                  <strong style={{ color: '#F8FAFC' }}>Did you know? </strong>
-                  {dossier.funFact}
-                </div>
-                <div>
-                  <strong style={{ color: '#F8FAFC' }}>Size Scale: </strong>
-                  {dossier.sizeComparison}
-                </div>
-              </div>
-            </div>
           ) : (
-            <p style={{ fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
-              {creature.description}
-            </p>
+            <div style={{ fontSize: '0.9rem', lineHeight: 1.55, color: '#F1F5F9' }}>
+              {aiSummary ? (
+                <>
+                  <p style={{ margin: '0 0 8px', fontStyle: 'italic' }}>"{aiSummary.text}"</p>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
+                    ✓ {aiSummary.isNativeAI ? 'Generated on-device via Gemini Nano' : 'Synthesized via Natural Science Communicator'}
+                  </span>
+                </>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-primary)', padding: '10px 0' }}>
+                  <Loader2 size={16} className="animate-spin-slow" />
+                  <span>Synthesizing concise museum plaque on-device...</span>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Curious? Conversational AI Prompt Chips */}
+        {/* Interactive "Curious?" Pill Dock */}
         <div style={{
           background: 'rgba(255, 255, 255, 0.02)',
           border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-card)',
-          padding: '12px 16px'
+          padding: '14px 16px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <span style={{ fontSize: '0.95rem' }}>✨</span>
@@ -461,14 +566,15 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               Curious?
             </span>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Ask a question
+              Click to ask on-device AI
             </span>
           </div>
+
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {[
-              { label: 'Why is it weird?', q: 'Why is this creature weird or unusual?' },
-              { label: 'How does it survive?', q: 'How does it survive and find food?' },
-              { label: "What's its strangest trick?", q: "What is its single strangest defense or biological trick?" }
+              { label: '🤔 Why is it weird?', q: 'Why is this creature weird or unusual?' },
+              { label: '🛡️ How does it survive?', q: 'How does it survive and find food?' },
+              { label: "👀 What's its strangest trick?", q: "What is its single strangest defense or biological trick?" }
             ].map((chip, idx) => {
               const isActive = activeCuriousPrompt === chip.q;
               return (
@@ -495,24 +601,24 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
 
           {(isLoadingCurious || curiousAnswer) && (
             <div style={{
-              marginTop: '10px',
-              padding: '10px 14px',
-              borderRadius: '8px',
-              background: 'rgba(0, 240, 255, 0.04)',
-              border: '1px solid rgba(0, 240, 255, 0.18)',
-              fontSize: '0.86rem',
+              marginTop: '12px',
+              padding: '12px 14px',
+              borderRadius: '10px',
+              background: 'rgba(0, 240, 255, 0.05)',
+              border: '1px solid rgba(0, 240, 255, 0.22)',
+              fontSize: '0.88rem',
               lineHeight: 1.5,
               color: 'var(--text-primary)'
             }}>
               {isLoadingCurious ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-primary)' }}>
-                  <Loader2 size={13} className="animate-spin-slow" />
-                  <span>Thinking with on-device AI...</span>
+                  <Loader2 size={14} className="animate-spin-slow" />
+                  <span>Consulting on-device AI...</span>
                 </div>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <span style={{ color: 'var(--accent-primary)', fontSize: '1rem', lineHeight: 1 }}>💬</span>
-                  <div>{curiousAnswer}</div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ color: 'var(--accent-primary)', fontSize: '1.1rem', lineHeight: 1 }}>💬</span>
+                  <div style={{ color: '#F1F5F9' }}>{curiousAnswer}</div>
                 </div>
               )}
             </div>
@@ -535,7 +641,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               gap: '8px'
             }}
           >
-            <div className="brutalist-data-chip" style={{ padding: '8px' }}>
+            <div className="brutalist-data-chip" style={{ padding: '8px 10px', borderRadius: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '0.64rem' }}>
                 <Ruler size={11} />
                 <span>LENGTH / SIZE</span>
@@ -545,7 +651,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               </span>
             </div>
 
-            <div className="brutalist-data-chip" style={{ padding: '8px' }}>
+            <div className="brutalist-data-chip" style={{ padding: '8px 10px', borderRadius: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '0.64rem' }}>
                 <Scale size={11} />
                 <span>WEIGHT / MASS</span>
@@ -559,14 +665,14 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               </span>
             </div>
 
-            <div className="brutalist-data-chip" style={{ padding: '8px' }}>
+            <div className="brutalist-data-chip" style={{ padding: '8px 10px', borderRadius: '8px' }}>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.64rem' }}>TROPHIC DIET</span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                 {creature.diet || 'Fauna'}
               </span>
             </div>
 
-            <div className="brutalist-data-chip" style={{ padding: '8px' }}>
+            <div className="brutalist-data-chip" style={{ padding: '8px 10px', borderRadius: '8px' }}>
               <span style={{ color: 'var(--text-muted)', fontSize: '0.64rem' }}>PRIMARY BIOME</span>
               <span
                 style={{
@@ -633,7 +739,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
           </details>
         )}
 
-        {/* Data Provenance & Scientific Links (Icons with Label Text) */}
+        {/* Data Provenance & Scientific Links */}
         <div
           style={{
             display: 'flex',
@@ -654,7 +760,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-subtle-brutalist"
-                  style={{ textDecoration: 'none', padding: '3px 8px', fontSize: '0.68rem' }}
+                  style={{ textDecoration: 'none', padding: '3px 8px', fontSize: '0.68rem', borderRadius: 'var(--radius-button)' }}
                 >
                   <ExternalLink size={10} style={{ color: 'var(--accent-primary)' }} />
                   <span>{src.provider} Record</span>
@@ -673,7 +779,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               target="_blank"
               rel="noopener noreferrer"
               className="btn-subtle-brutalist"
-              style={{ textDecoration: 'none', padding: '4px 10px', fontSize: '0.72rem' }}
+              style={{ textDecoration: 'none', padding: '4px 10px', fontSize: '0.72rem', borderRadius: 'var(--radius-button)' }}
             >
               <ExternalLink size={11} />
               <span>Wikipedia</span>
@@ -684,3 +790,4 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
     </div>
   );
 }
+
