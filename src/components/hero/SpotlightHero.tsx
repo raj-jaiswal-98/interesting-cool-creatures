@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Clock, Compass, ShieldAlert, Ruler, Scale, ArrowRight, Shuffle } from 'lucide-react';
 import { getTimeUntilNextSpotlight } from '../../utils/seedGenerator';
 import { getCreaturePersonalityTags, getCreatureTinyFact } from '../../utils/personality';
+import { formatCreatureLength, formatCreatureWeight } from '../../utils/formatters';
 import type { Creature } from '../../types/creature';
 
 interface SpotlightHeroProps {
@@ -244,7 +245,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
                     <span>LENGTH</span>
                   </div>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
-                    {creature.stats?.lengthMeters ? `${creature.stats.lengthMeters}m` : 'Var'}
+                    {formatCreatureLength(creature.stats?.lengthMeters, true)}
                   </div>
                 </div>
 
@@ -259,11 +260,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
                     <span>WEIGHT</span>
                   </div>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
-                    {creature.stats?.weightKg != null
-                      ? creature.stats.weightKg >= 1000
-                        ? `${(creature.stats.weightKg / 1000).toFixed(1)}t`
-                        : `${creature.stats.weightKg}kg`
-                      : 'Light'}
+                    {formatCreatureWeight(creature.stats?.weightKg, true)}
                   </div>
                 </div>
 

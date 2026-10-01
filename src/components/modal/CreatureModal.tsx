@@ -117,12 +117,13 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
                 e.currentTarget.src = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80';
               }}
               style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '12px',
+                width: '46px',
+                height: '46px',
+                borderRadius: '50%',
                 objectFit: 'cover',
                 border: '1.5px solid var(--accent-primary)',
-                boxShadow: '0 0 15px var(--bg-glow)'
+                boxShadow: '0 0 12px var(--bg-glow)',
+                flexShrink: 0
               }}
             />
             <div>
