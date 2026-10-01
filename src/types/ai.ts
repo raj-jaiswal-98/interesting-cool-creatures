@@ -73,3 +73,12 @@ export interface VisualImageAnalysis {
   isNativeVision: boolean;
 }
 
+export type EmbeddingStatus = 'idle' | 'loading' | 'ready' | 'unsupported';
+
+export interface EmbeddingIndexFile {
+  header: { model: string; dim: number; textVersion: number };
+  ids: string[];
+  vectors: number[][];
+}
+
+

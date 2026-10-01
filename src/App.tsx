@@ -9,6 +9,7 @@ import { SpotlightHero } from './components/hero/SpotlightHero';
 import { ExtinctionTimeline } from './components/timeline/ExtinctionTimeline';
 import { CreatureModal } from './components/modal/CreatureModal';
 import { chromeAI } from './services/ai/chromeAIService';
+import { embeddingService } from './services/ai/embeddingService';
 import { creatureResolver } from './services/resolver/creatureResolver';
 import type { Creature } from './types/creature';
 import type { AIAvailabilityStatus } from './types/ai';
@@ -106,6 +107,19 @@ export function AppContent() {
 
     // Automatically stream research-grade species until target (200-250) is reached
     startStreamingToTarget();
+
+    // Idle-initialize Transformers.js background embedding worker
+    const startEmbedder = () => embeddingService.init();
+    const w = window as any;
+    const h = typeof w.requestIdleCallback === 'function' ? w.requestIdleCallback(startEmbedder) : setTimeout(startEmbedder, 1200);
+
+    return () => {
+      if (typeof w.cancelIdleCallback === 'function') {
+        w.cancelIdleCallback(h);
+      } else {
+        clearTimeout(h);
+      }
+    };
   }, []);
 
   const [surpriseToast, setSurpriseToast] = useState<string | null>(null);
