@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, SlidersHorizontal, Sparkles, Globe, Loader2, Compass } from 'lucide-react';
 import { TimelineNodeCard } from './TimelineNodeCard';
+import { AddMoreCard } from './AddMoreCard';
 import { creatureResolver } from '../../services/resolver/creatureResolver';
 import type { Creature } from '../../types/creature';
 
@@ -15,8 +16,19 @@ interface ExtinctionTimelineProps {
     target: number;
     isStreaming: boolean;
   };
+  onStreamToTarget?: () => void;
   onStreamTo100?: () => void;
 }
+
+export const CREATURE_CATEGORIES = [
+  { id: 'all', label: 'All Biomes', icon: '✨' },
+  { id: 'marine', label: 'Ocean & Deep Sea', icon: '🌊' },
+  { id: 'forest', label: 'Terrestrial & Forests', icon: '🐾' },
+  { id: 'aerial', label: 'Birds & Aerial', icon: '🪽' },
+  { id: 'volcanic', label: 'Extreme & Desert', icon: '🌋' },
+  { id: 'tundra', label: 'Polar & Tundra', icon: '❄️' },
+  { id: 'ancient', label: 'Ancient Fossils', icon: '🦴' }
+];
 
 const ERAS = [
   { id: 'all', label: 'All Eras' },
@@ -34,8 +46,10 @@ export function ExtinctionTimeline({
   onSelectCreature,
   onAddCreatures,
   streamingProgress,
+  onStreamToTarget,
   onStreamTo100
 }: ExtinctionTimelineProps) {
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedEra, setSelectedEra] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('chronology-asc');
@@ -89,27 +103,65 @@ export function ExtinctionTimeline({
     }
   };
 
+  const handleFetchCategoryBatch = async (categoryToFetch: string, count: number) => {
+    setIsDiscovering(true);
+    setLiveSearchFeedback(null);
+    try {
+      const fetched = await creatureResolver.fetchUniqueCreaturesForCategory(categoryToFetch, count, creatures);
+      if (fetched.length > 0 && onAddCreatures) {
+        onAddCreatures(fetched);
+        const catObj = CREATURE_CATEGORIES.find((c) => c.id === categoryToFetch);
+        const catLabel = catObj ? `${catObj.icon} ${catObj.label}` : categoryToFetch;
+        setLiveSearchFeedback(`✨ Ingested ${fetched.length} new unique specimens live for ${catLabel}!`);
+      } else {
+        setLiveSearchFeedback(`All top candidates for ${categoryToFetch} are already in the museum.`);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch category batch:', err);
+      setLiveSearchFeedback(`Could not fetch live specimens for ${categoryToFetch}. Please try again.`);
+    } finally {
+      setIsDiscovering(false);
+    }
+  };
+
   const filteredCreatures = useMemo(() => {
-    return [...searchedCreatures].sort((a, b) => {
-      if (sortBy === 'chronology-asc') {
-        const yearA = a.extinctionYear === null ? 2026 : a.extinctionYear;
-        const yearB = b.extinctionYear === null ? 2026 : b.extinctionYear;
-        return yearA - yearB;
-      }
-      if (sortBy === 'chronology-desc') {
-        const yearA = a.extinctionYear === null ? 2026 : a.extinctionYear;
-        const yearB = b.extinctionYear === null ? 2026 : b.extinctionYear;
-        return yearB - yearA;
-      }
-      if (sortBy === 'danger') {
-        return (b.stats?.dangerLevel || 0) - (a.stats?.dangerLevel || 0);
-      }
-      if (sortBy === 'name') {
-        return a.commonName.localeCompare(b.commonName);
-      }
-      return 0;
-    });
-  }, [searchedCreatures, sortBy]);
+    return [...searchedCreatures]
+      .filter((c) => {
+        // Category / Habitat Filter
+        if (selectedCategory !== 'all') {
+          if (selectedCategory === 'ancient') {
+            const isExtinct = c.extinctionYear !== null || c.era !== 'Modern';
+            if (!isExtinct) return false;
+          } else if (c.habitatType !== selectedCategory) {
+            return false;
+          }
+        }
+        // Geological Era Filter
+        if (selectedEra !== 'all' && c.era.toLowerCase() !== selectedEra.toLowerCase()) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'chronology-asc') {
+          const yearA = a.extinctionYear === null ? 2026 : a.extinctionYear;
+          const yearB = b.extinctionYear === null ? 2026 : b.extinctionYear;
+          return yearA - yearB;
+        }
+        if (sortBy === 'chronology-desc') {
+          const yearA = a.extinctionYear === null ? 2026 : a.extinctionYear;
+          const yearB = b.extinctionYear === null ? 2026 : b.extinctionYear;
+          return yearB - yearA;
+        }
+        if (sortBy === 'danger') {
+          return (b.stats?.dangerLevel || 0) - (a.stats?.dangerLevel || 0);
+        }
+        if (sortBy === 'name') {
+          return a.commonName.localeCompare(b.commonName);
+        }
+        return 0;
+      });
+  }, [searchedCreatures, selectedCategory, selectedEra, sortBy]);
 
 
   return (
@@ -133,39 +185,86 @@ export function ExtinctionTimeline({
           padding: '16px 20px',
           marginBottom: '32px',
           display: 'flex',
-          flexWrap: 'wrap',
-          gap: '16px',
-          alignItems: 'center',
-          justifyContent: 'space-between'
+          flexDirection: 'column',
+          gap: '14px'
         }}>
-          {/* Era Filter Pills */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {ERAS.map((era) => {
-              const isActive = selectedEra.toLowerCase() === era.id.toLowerCase();
+          {/* Category / Biome Filter Pills */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: '4px' }}>
+              Category:
+            </span>
+            {CREATURE_CATEGORIES.map((cat) => {
+              const isActive = selectedCategory.toLowerCase() === cat.id.toLowerCase();
               return (
                 <button
-                  key={era.id}
-                  onClick={() => setSelectedEra(era.id)}
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
                   style={{
                     background: isActive ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.05)',
                     color: isActive ? '#050B10' : 'var(--text-secondary)',
                     border: '1px solid',
                     borderColor: isActive ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                    padding: '8px 16px',
+                    padding: '6px 14px',
                     borderRadius: 'var(--radius-full)',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
                     cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
                     transition: 'all var(--transition-fast)',
                     outline: 'none'
                   }}
-                  id={`filter-era-${era.id.toLowerCase()}`}
+                  id={`filter-category-${cat.id.toLowerCase()}`}
                 >
-                  {era.label}
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
                 </button>
               );
             })}
           </div>
+
+          {/* Sub-Row: Eras + Search & Sort Controls */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '14px',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingTop: '10px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+          }}>
+            {/* Era Filter Pills */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: '4px' }}>
+                Era:
+              </span>
+              {ERAS.map((era) => {
+                const isActive = selectedEra.toLowerCase() === era.id.toLowerCase();
+                return (
+                  <button
+                    key={era.id}
+                    onClick={() => setSelectedEra(era.id)}
+                    style={{
+                      background: isActive ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.03)',
+                      color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                      border: '1px solid',
+                      borderColor: isActive ? 'var(--text-secondary)' : 'var(--border-subtle)',
+                      padding: '5px 12px',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all var(--transition-fast)',
+                      outline: 'none'
+                    }}
+                    id={`filter-era-${era.id.toLowerCase()}`}
+                  >
+                    {era.label}
+                  </button>
+                );
+              })}
+            </div>
 
           {/* Search & Sort Controls */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -274,10 +373,12 @@ export function ExtinctionTimeline({
             </div>
 
 
-            {/* Stream 100 Species / Ingest Button */}
+            {/* Stream Species / Ingest Button */}
             <button
               onClick={() => {
-                if (onStreamTo100) {
+                if (onStreamToTarget) {
+                  onStreamToTarget();
+                } else if (onStreamTo100) {
                   onStreamTo100();
                 } else {
                   handleDiscoverLive();
@@ -300,7 +401,7 @@ export function ExtinctionTimeline({
                   : 'rgba(255, 255, 255, 0.04)'
               }}
               id="btn-discover-live"
-              title="Continuously stream research-grade specimens until 100 organisms are in the catalog"
+              title={`Continuously stream research-grade specimens until ${streamingProgress?.target || 225} organisms are in the catalog`}
             >
               {streamingProgress?.isStreaming || isDiscovering ? (
                 <Loader2 size={15} className="animate-spin-slow" style={{ color: 'var(--accent-primary)' }} />
@@ -309,10 +410,10 @@ export function ExtinctionTimeline({
               )}
               <span>
                 {streamingProgress?.isStreaming
-                  ? `Ingesting (${creatures.length}/100)...`
-                  : creatures.length >= 100
-                  ? `✓ 100 Species Cataloged (${creatures.length})`
-                  : 'Stream to 100 Species'}
+                  ? `Ingesting (${creatures.length}/${streamingProgress.target})...`
+                  : creatures.length >= (streamingProgress?.target || 225)
+                  ? `✓ Goal Reached (${creatures.length})`
+                  : `Stream to ${streamingProgress?.target || 225} Species`}
               </span>
             </button>
 
@@ -368,6 +469,7 @@ export function ExtinctionTimeline({
             </div>
           </div>
         </div>
+      </div>
 
         {/* Live Search Notification Banner */}
         {liveSearchFeedback && (
@@ -414,22 +516,26 @@ export function ExtinctionTimeline({
             Showing <strong>{filteredCreatures.length}</strong> of <strong>{creatures.length}</strong> extraordinary organisms
             {streamingProgress?.isStreaming && (
               <span style={{ marginLeft: '8px', color: 'var(--accent-primary)', fontWeight: 600 }} className="animate-pulse">
-                • Streaming live research-grade observations ({creatures.length} / 100)...
+                • Streaming live observations ({creatures.length} / {streamingProgress?.target || 225})...
               </span>
             )}
           </div>
-          {searchQuery && (
+          {(searchQuery || selectedCategory !== 'all' || selectedEra !== 'all') && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+                setSelectedEra('all');
+              }}
               className="btn btn-ghost"
               style={{ fontSize: '0.8rem', padding: '2px 8px' }}
             >
-              Clear search
+              Reset all filters
             </button>
           )}
         </div>
 
-        {/* Responsive Grid of Compact Centered Creature Cards */}
+        {/* Responsive Grid of Compact Centered Creature Cards + Dynamic Add More Card */}
         {filteredCreatures.length > 0 ? (
           <div style={{
             display: 'grid',
@@ -444,52 +550,75 @@ export function ExtinctionTimeline({
                 isGloballySimplified={isGlobalSimplified}
               />
             ))}
+
+            {/* Dynamic Add More Card for current category + rest of categories */}
+            <AddMoreCard
+              category={selectedCategory}
+              categoryLabel={CREATURE_CATEGORIES.find((c) => c.id === selectedCategory)?.label || 'Creatures'}
+              onFetchMore={handleFetchCategoryBatch}
+              isFetching={isDiscovering}
+            />
           </div>
         ) : (
-          <div className="glass-panel" style={{
-            padding: '60px 20px',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '16px',
-            borderRadius: 'var(--radius-card)',
-            border: '2px dashed var(--border-subtle)'
-          }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '4px' }}>🔍</div>
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>
-              {searchQuery ? `Nothing strange here for "${searchQuery}"` : 'Nothing strange here yet'}
-            </h3>
-            <p style={{ color: 'var(--text-secondary)', maxWidth: '440px', fontSize: '0.95rem', lineHeight: 1.5 }}>
-              {searchQuery
-                ? `We couldn't find an organism matching that in the catalog. Would you like to ask the global live networks (GBIF & iNaturalist)?`
-                : 'Try picking another geological era or reset your filters to see all weird specimens.'}
-            </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="glass-panel" style={{
+              padding: '50px 20px',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '14px',
+              borderRadius: 'var(--radius-card)',
+              border: '2px dashed var(--border-subtle)'
+            }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '4px' }}>🔍</div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
+                {searchQuery
+                  ? `Nothing strange here for "${searchQuery}"`
+                  : `No ${CREATURE_CATEGORIES.find((c) => c.id === selectedCategory)?.label || 'specimens'} in this filter yet`}
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', maxWidth: '440px', fontSize: '0.92rem', lineHeight: 1.5, margin: 0 }}>
+                {searchQuery
+                  ? `We couldn't find an organism matching that in the catalog. Would you like to ask the global live networks?`
+                  : `Tap below to summon new unique ${CREATURE_CATEGORIES.find((c) => c.id === selectedCategory)?.label || ''} specimens from live biodiversity networks!`}
+              </p>
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '8px' }}>
-              {searchQuery && (
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '6px' }}>
+                {searchQuery && (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleLiveSearch()}
+                    disabled={isSearchingLive}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRadius: 'var(--radius-button)' }}
+                  >
+                    {isSearchingLive ? <Loader2 size={16} className="animate-spin-slow" /> : <Globe size={16} />}
+                    <span>Search Worldwide Live</span>
+                  </button>
+                )}
+
                 <button
-                  className="btn btn-primary"
-                  onClick={() => handleLiveSearch()}
-                  disabled={isSearchingLive}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRadius: 'var(--radius-button)' }}
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setSelectedCategory('all');
+                    setSelectedEra('all');
+                    setSearchQuery('');
+                    setLiveSearchFeedback(null);
+                  }}
+                  style={{ borderRadius: 'var(--radius-button)' }}
                 >
-                  {isSearchingLive ? <Loader2 size={16} className="animate-spin-slow" /> : <Globe size={16} />}
-                  <span>Search Worldwide Live</span>
+                  Reset filters →
                 </button>
-              )}
+              </div>
+            </div>
 
-              <button
-                className="btn btn-secondary"
-                onClick={() => {
-                  setSelectedEra('all');
-                  setSearchQuery('');
-                  setLiveSearchFeedback(null);
-                }}
-                style={{ borderRadius: 'var(--radius-button)' }}
-              >
-                Reset filters →
-              </button>
+            {/* Always surface the Add More Card so the user can easily fetch specimens directly into empty view */}
+            <div style={{ maxWidth: '340px', margin: '0 auto', width: '100%' }}>
+              <AddMoreCard
+                category={selectedCategory}
+                categoryLabel={CREATURE_CATEGORIES.find((c) => c.id === selectedCategory)?.label || 'Creatures'}
+                onFetchMore={handleFetchCategoryBatch}
+                isFetching={isDiscovering}
+              />
             </div>
           </div>
         )}
