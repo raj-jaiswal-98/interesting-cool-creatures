@@ -1,5 +1,6 @@
 import React from 'react';
-import { Compass, ShieldAlert, ArrowUpRight } from 'lucide-react';
+import { Compass, ShieldAlert, ArrowUpRight, Globe } from 'lucide-react';
+import { CREATURE_CATALOG } from '../../data/creatureCatalog';
 import type { Creature } from '../../types/creature';
 
 interface TimelineNodeCardProps {
@@ -9,6 +10,7 @@ interface TimelineNodeCardProps {
 
 export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) {
   const isExtant = creature.extinctionYear === null;
+  const isDynamic = !CREATURE_CATALOG.some((c) => c.id === creature.id);
   const eraClass = `badge-${creature.era.toLowerCase()}`;
 
   const handleClick = () => {
@@ -56,6 +58,7 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
         <img
           src={creature.photoUrl}
           alt={creature.commonName}
+          referrerPolicy="no-referrer"
           loading="lazy"
           style={{
             width: '100%',
@@ -69,6 +72,9 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
           onMouseLeave={(e: React.MouseEvent<HTMLImageElement>) => {
             e.currentTarget.style.transform = 'scale(1.0)';
           }}
+          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+            e.currentTarget.style.display = 'none';
+          }}
         />
 
         {/* Top Badges */}
@@ -79,11 +85,31 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
           right: '12px',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          gap: '6px'
         }}>
-          <span className={`badge ${eraClass}`}>
-            {creature.era}
-          </span>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <span className={`badge ${eraClass}`}>
+              {creature.era}
+            </span>
+            {isDynamic && (
+              <span
+                className="badge"
+                style={{
+                  background: 'rgba(0, 240, 255, 0.25)',
+                  border: '1px solid var(--accent-primary)',
+                  color: '#38BDF8',
+                  fontSize: '0.68rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <Globe size={10} />
+                <span>Live Bio</span>
+              </span>
+            )}
+          </div>
           <span className={`badge ${isExtant ? 'badge-extant' : 'badge-extinct'}`} style={{ backdropFilter: 'blur(8px)' }}>
             {isExtant ? 'Living' : 'Extinct'}
           </span>

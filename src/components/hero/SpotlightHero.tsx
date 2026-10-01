@@ -103,6 +103,7 @@ export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps
             <img
               src={creature.photoUrl}
               alt={creature.commonName}
+              referrerPolicy="no-referrer"
               style={{
                 width: '100%',
                 height: '100%',

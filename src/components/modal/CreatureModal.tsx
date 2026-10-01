@@ -99,6 +99,7 @@ export function CreatureModal({ creature, onClose }: CreatureModalProps) {
             <img
               src={creature.photoUrl}
               alt={creature.commonName}
+              referrerPolicy="no-referrer"
               style={{
                 width: '56px',
                 height: '56px',

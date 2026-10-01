@@ -119,6 +119,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
           <img
             src={creature.photoUrl}
             alt={creature.commonName}
+            referrerPolicy="no-referrer"
             style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent-primary)' }}
           />
           <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{creature.commonName}</strong>
@@ -164,6 +165,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
           <img
             src={opponent.photoUrl}
             alt={opponent.commonName}
+            referrerPolicy="no-referrer"
             style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #F87171' }}
           />
           <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{opponent.commonName}</strong>

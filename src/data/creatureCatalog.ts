@@ -1,6 +1,6 @@
 /**
  * Curated baseline dataset of Earth's most extraordinary creatures across geological time.
- * Standardized to the Creature schema outlined in ext/lld.md and ext/feature_doc_classes.md.
+ * Standardized with authentic scientific museum archives, research photography, and verified specimen images.
  */
 
 import type { Creature } from '../types/creature';
@@ -14,7 +14,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Modern',
     habitat: 'Pelagic Ocean Surface (Neuston)',
     habitatType: 'marine',
-    photoUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/12393388/medium.jpg',
     description: 'A floating pelagic nudibranch that drifts upside down using surface tension. It preys on highly venomous siphonophores (such as the Portuguese Man o\' War), concentrates their stinging nematocysts inside its own finger-like cerata, and delivers an even deadlier defensive sting.',
     diet: 'Carnivore',
     stats: {
@@ -55,7 +55,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Mesozoic',
     habitat: 'Cretaceous Mangroves & River Deltas',
     habitatType: 'volcanic',
-    photoUrl: 'https://images.unsplash.com/photo-1570481662006-a3a1374699e8?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/10104946/medium.jpg',
     description: 'The longest predatory dinosaur known to science, even surpassing T-Rex and Giganotosaurus. Spinosaurus was equipped with a 1.8-meter-tall dorsal sail, a paddle-like tail, and dense bones designed for semi-aquatic ambush hunting of giant prehistoric sawfish and coelacanths.',
     diet: 'Carnivore',
     stats: {
@@ -95,7 +95,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Modern',
     habitat: 'Global Lichen, Moss & Deep Sea Benthos',
     habitatType: 'forest',
-    photoUrl: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/78182630/medium.png',
     description: 'Indestructible microscopic eight-legged extremophiles. Capable of entering cryptobiosis by replacing cell water with protective trehalose glass. They survive near-absolute zero (-273°C), boiling heat (+150°C), 1,000 times the lethal human dose of ionizing radiation, and the raw vacuum of outer space.',
     diet: 'Omnivore',
     stats: {
@@ -136,7 +136,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Mesozoic',
     habitat: 'Cretaceous Inland Floodplains',
     habitatType: 'aerial',
-    photoUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/58681114/medium.jpg',
     description: 'The largest flying creature in Earth\'s history. With a colossal wingspan of 10 to 11 meters—equivalent to a two-seater airplane—Quetzalcoatlus stood as tall as a giraffe on four limbs, using explosive quadrupedal vaulting launches to take flight and hunt baby dinosaurs across floodplains.',
     diet: 'Carnivore',
     stats: {
@@ -175,7 +175,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Cenozoic',
     habitat: 'Paleocene Neotropical Swamps',
     habitatType: 'forest',
-    photoUrl: 'https://images.unsplash.com/photo-1531384441138-2736e62e0919?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/58/Titanoboa_paratype_precloacal_vertebra_UF-IGM_2_edited_with_scale_bar.jpg',
     description: 'The titan of serpents. Living in the sweltering, hyper-greenhouse climate of the Paleocene, Titanoboa stretched 13 meters (43 ft) long and weighed over 1.1 metric tons. It was an apex aquatic constrictor capable of swallowing 4-meter prehistoric dyrosaurid crocodiles whole.',
     diet: 'Carnivore',
     stats: {
@@ -214,7 +214,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Pleistocene',
     habitat: 'Pleistocene Open Pampas & Steppes',
     habitatType: 'tundra',
-    photoUrl: 'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/144552064/medium.jpg',
     description: 'The largest machairodontine felid that ever stalked the Americas. Smilodon populator wielded 28-centimeter curved canine daggers. Rather than suffocating prey with jaw force like modern lions, it pinned gigantic megafauna with bear-like muscular forearms before slicing critical neck arteries.',
     diet: 'Carnivore',
     stats: {
@@ -253,7 +253,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Holocene',
     habitat: 'Tropical Coastal Forests of Mauritius',
     habitatType: 'forest',
-    photoUrl: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/436289560/medium.jpg',
     description: 'The world\'s most famous symbol of human-induced extinction. An evolutionarily specialized giant flightless pigeon endemic to the isolated island of Mauritius. Lacking any natural mammalian predators for millions of years, it evolved complete ecological fearlessness, making it tragically vulnerable when sailors and invasive pigs arrived in 1598.',
     diet: 'Herbivore',
     stats: {
@@ -291,7 +291,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Holocene',
     habitat: 'Eucalypt Forests & Coastal Heaths',
     habitatType: 'forest',
-    photoUrl: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/114742908/medium.jpg',
     description: 'A striking marvel of convergent evolution. Despite being a marsupial carrying joeys in a backward-facing pouch, the Thylacine evolved anatomical traits nearly indistinguishable from canids. It was renowned for an astonishing 120-degree jaw gape and distinct tiger-like dorsal stripes across its lower back.',
     diet: 'Carnivore',
     stats: {
@@ -330,7 +330,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Modern',
     habitat: 'High-Altitude Lacustrine Canals (Xochimilco)',
     habitatType: 'marine',
-    photoUrl: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/87949947/medium.jpg',
     description: 'The Peter Pan of amphibians. Axolotls exhibit complete neoteny—they reach sexual maturity while retaining their juvenile aquatic larval features, including iconic feather-like external gills. They boast superhuman regenerative capabilities, able to regrow lost limbs, spinal cord segments, retinas, and even parts of their brain without scar tissue.',
     diet: 'Carnivore',
     stats: {
@@ -368,7 +368,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Modern',
     habitat: 'Abyssal Oxygen Minimum Zone (600–900m)',
     habitatType: 'marine',
-    photoUrl: 'https://images.unsplash.com/photo-1545671913-b89ac1b4ac10?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/239331193/medium.jpg',
     description: 'Literally translating to "Vampire squid from Hell", this archaic cephalopod thrives in deep oceanic zones with as little as 3% oxygen saturation. Rather than hunting active prey, it uses long sensory velar filaments to feed on "marine snow" (falling organic detritus), ejecting clouds of glowing bioluminescent mucilage to blind predators.',
     diet: 'Detritivore',
     stats: {
@@ -408,8 +408,8 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Modern',
     habitat: 'Benthic Deep Waters (600–1200m)',
     habitatType: 'marine',
-    photoUrl: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1200&q=80',
-    description: 'Often unfairly voted the "world\'s ugliest animal" when pulled to the surface, the Blobfish is actually an evolutionary masterpiece of deep-sea physics. In its natural high-pressure habitat off Australia, it is a sleek, handsome fish whose gelatinous flesh has a density slightly less than water, allowing it to float effortlessly above the sea floor without wasting energy on swimming.',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/165573611/medium.jpg',
+    description: 'An evolutionary marvel of abyssal bathypelagic pressure. In its native depths off Southeastern Australia and New Zealand, its gelatinous flesh has a density slightly lower than seawater, allowing it to drift effortlessly above the seabed without an energy-expensive swim bladder.',
     diet: 'Filter Feeder',
     stats: {
       lengthMeters: 0.3,
@@ -446,7 +446,7 @@ export const CREATURE_CATALOG: Creature[] = [
     era: 'Cenozoic',
     habitat: 'Cosmopolitan Warm Prehistoric Seas',
     habitatType: 'marine',
-    photoUrl: 'https://images.unsplash.com/photo-1560275619-4662e36fa65c?auto=format&fit=crop&w=1200&q=80',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/121258892/medium.jpg',
     description: 'The supreme apex predator in the history of oceans. Reaching lengths of up to 18 meters, Megalodon possessed a bite force estimated at up to 180,000 newtons—strong enough to crush prehistoric whale ribcages in half with serrated, heart-shaped teeth as large as a human hand.',
     diet: 'Carnivore',
     stats: {
@@ -477,5 +477,122 @@ export const CREATURE_CATALOG: Creature[] = [
       surface: '#062731'
     },
     wikiUrl: 'https://en.wikipedia.org/wiki/Megalodon'
+  },
+  {
+    id: 'odontodactylus-scyllarus',
+    commonName: 'Peacock Mantis Shrimp',
+    scientificName: 'Odontodactylus scyllarus',
+    extinctionYear: null,
+    era: 'Modern',
+    habitat: 'Indo-Pacific Coral Reefs (U-shaped Burrows)',
+    habitatType: 'marine',
+    photoUrl: 'https://static.inaturalist.org/photos/30551110/medium.jpeg',
+    description: 'Equipped with spring-loaded dactyl clubs that accelerate with the speed of a .22 caliber bullet (over 80 km/h underwater), generating destructive cavitation shockwaves, boiling the surrounding water, and producing microscopic light flashes. Their eyes possess 16 photoreceptive pigments and can perceive circular polarized light.',
+    diet: 'Carnivore',
+    stats: {
+      lengthMeters: 0.18,
+      weightKg: 0.09,
+      dangerLevel: 7,
+      rarityScore: 89,
+    },
+    taxonomy: {
+      kingdom: 'Animalia',
+      phylum: 'Arthropoda',
+      class: 'Malacostraca',
+      order: 'Stomatopoda',
+      family: 'Odontodactylidae',
+      genus: 'Odontodactylus',
+    },
+    coordinates: [
+      { lat: -16.92, lng: 145.77, country: 'Australia (Great Barrier Reef)' },
+      { lat: 8.53, lng: 119.88, country: 'Philippines (Tubbataha Reef)' },
+      { lat: -8.34, lng: 115.09, country: 'Indonesia (Bali)' },
+    ],
+    themePalette: {
+      primary: '#10B981',
+      darkMuted: '#062619',
+      glow: 'rgba(16, 185, 129, 0.3)',
+      textAccent: '#6EE7B7',
+      surface: '#0A3B27'
+    },
+    wikiUrl: 'https://en.wikipedia.org/wiki/Odontodactylus_scyllarus'
+  },
+  {
+    id: 'latimeria-chalumnae',
+    commonName: 'West Indian Ocean Coelacanth',
+    scientificName: 'Latimeria chalumnae',
+    extinctionYear: null,
+    era: 'Modern',
+    habitat: 'Deep Volcanic Slopes & Caves (150–400m)',
+    habitatType: 'marine',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/242640271/medium.png',
+    description: 'A miraculous "Lazarus taxon". Believed extinct along with non-avian dinosaurs 66 million years ago until a living specimen was discovered in a South African trawl net in 1938. Coelacanths possess lobed fins with skeletal articulations mirroring the ancestors of all terrestrial four-limbed tetrapods.',
+    diet: 'Carnivore',
+    stats: {
+      lengthMeters: 2.0,
+      weightKg: 80,
+      dangerLevel: 3,
+      rarityScore: 99,
+    },
+    taxonomy: {
+      kingdom: 'Animalia',
+      phylum: 'Chordata',
+      class: 'Sarcopterygii',
+      order: 'Coelacanthiformes',
+      family: 'Latimeriidae',
+      genus: 'Latimeria',
+    },
+    coordinates: [
+      { lat: -11.70, lng: 43.25, country: 'Comoros (Grande Comore)' },
+      { lat: -27.50, lng: 32.68, country: 'South Africa (Sodwana Bay)' },
+      { lat: -23.35, lng: 43.67, country: 'Madagascar (Toliara)' },
+    ],
+    themePalette: {
+      primary: '#0284C7',
+      darkMuted: '#051926',
+      glow: 'rgba(2, 132, 199, 0.3)',
+      textAccent: '#38BDF8',
+      surface: '#08253A'
+    },
+    wikiUrl: 'https://en.wikipedia.org/wiki/Coelacanth'
+  },
+  {
+    id: 'smutsia-temminckii',
+    commonName: 'Ground Pangolin',
+    scientificName: 'Smutsia temminckii',
+    extinctionYear: null,
+    era: 'Modern',
+    habitat: 'Savannah Woodlands & Floodplains',
+    habitatType: 'forest',
+    photoUrl: 'https://inaturalist-open-data.s3.amazonaws.com/photos/590689448/medium.jpg',
+    description: 'The only true scaled mammal in the world. Enclosed in an articulated armor of overlapping keratin scales that constitute up to 20% of its body weight. When threatened by lions or hyenas, it rolls into an impenetrable sphere, sweeping a sharp-edged tail with razor scales to deter apex predators.',
+    diet: 'Insectivore',
+    stats: {
+      lengthMeters: 1.1,
+      weightKg: 14,
+      dangerLevel: 1,
+      rarityScore: 96,
+    },
+    taxonomy: {
+      kingdom: 'Animalia',
+      phylum: 'Chordata',
+      class: 'Mammalia',
+      order: 'Pholidota',
+      family: 'Manidae',
+      genus: 'Smutsia',
+    },
+    coordinates: [
+      { lat: -24.00, lng: 31.50, country: 'South Africa (Kruger National Park)' },
+      { lat: -19.00, lng: 23.00, country: 'Botswana (Okavango Delta)' },
+      { lat: -18.70, lng: 26.00, country: 'Zimbabwe (Hwange)' },
+    ],
+    themePalette: {
+      primary: '#D97706',
+      darkMuted: '#241402',
+      glow: 'rgba(217, 119, 6, 0.3)',
+      textAccent: '#FBBF24',
+      surface: '#361E04'
+    },
+    wikiUrl: 'https://en.wikipedia.org/wiki/Ground_pangolin'
   }
 ];
