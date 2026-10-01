@@ -4,7 +4,6 @@ import {
   MapPin,
   Swords
 } from 'lucide-react';
-import { CREATURE_CATALOG } from '../../data/creatureCatalog';
 import { getCreaturePersonalityTags, getCreatureTinyFact } from '../../utils/personality';
 import { formatCreatureLength, formatCreatureWeight } from '../../utils/formatters';
 import type { Creature } from '../../types/creature';
@@ -18,7 +17,6 @@ interface TimelineNodeCardProps {
 export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) {
   const [imgHovered, setImgHovered] = useState(false);
 
-  const isDynamic = !CREATURE_CATALOG.some((c) => c.id === creature.id);
   const eraClass = `badge-${creature.era.toLowerCase()}`;
   const personalityTags = getCreaturePersonalityTags(creature);
   const tinyFact = getCreatureTinyFact(creature);
@@ -89,27 +87,6 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
               e.currentTarget.src = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80';
             }}
           />
-
-          {isDynamic && (
-            <span
-              style={{
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                background: 'rgba(0, 255, 102, 0.25)',
-                border: '1px solid var(--accent-primary)',
-                color: 'var(--accent-primary)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.62rem',
-                fontWeight: 700,
-                padding: '2px 6px',
-                borderRadius: 'var(--radius-full)',
-                backdropFilter: 'blur(4px)'
-              }}
-            >
-              ● LIVE
-            </span>
-          )}
 
           <span
             className={`badge ${eraClass}`}
