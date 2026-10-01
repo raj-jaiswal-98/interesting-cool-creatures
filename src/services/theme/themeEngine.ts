@@ -1,21 +1,77 @@
 import ColorThief from 'colorthief';
 import type { ThemePalette } from '../../types/creature';
 
+export interface BrutalistThemeOption {
+  id: string;
+  name: string;
+  icon: string;
+  primary: string;
+  darkMuted: string;
+  glow: string;
+  textAccent: string;
+  surface: string;
+}
+
+export const BRUTALIST_THEMES: Record<string, BrutalistThemeOption> = {
+  acid: {
+    id: 'acid',
+    name: 'Acid Lime',
+    icon: '🟢',
+    primary: '#00FF66',
+    darkMuted: '#0A150D',
+    glow: 'rgba(0, 255, 102, 0.18)',
+    textAccent: '#66FFA3',
+    surface: '#121316'
+  },
+  amber: {
+    id: 'amber',
+    name: 'Solar Amber',
+    icon: '🟡',
+    primary: '#FFB800',
+    darkMuted: '#1A1406',
+    glow: 'rgba(255, 184, 0, 0.18)',
+    textAccent: '#FFD15C',
+    surface: '#121316'
+  },
+  crimson: {
+    id: 'crimson',
+    name: 'Infrared Red',
+    icon: '🔴',
+    primary: '#FF2E63',
+    darkMuted: '#1A070D',
+    glow: 'rgba(255, 46, 99, 0.18)',
+    textAccent: '#FF6B8B',
+    surface: '#121316'
+  },
+  mono: {
+    id: 'mono',
+    name: 'Stark Mono',
+    icon: '⚪',
+    primary: '#F8FAFC',
+    darkMuted: '#141416',
+    glow: 'rgba(248, 250, 252, 0.14)',
+    textAccent: '#E2E8F0',
+    surface: '#121316'
+  }
+};
+
 /**
- * ThemeEngine extracts vibrant colors from creature photography,
+ * ThemeEngine manages non-blue Neo-Brutalist color palettes,
  * computes harmonious contrast hexes, and dynamically updates CSS custom properties on :root.
  */
 class ThemeEngine {
   defaultPalette: ThemePalette;
   currentPalette: ThemePalette;
+  activeThemeId: string;
 
   constructor() {
+    this.activeThemeId = 'acid';
     this.defaultPalette = {
-      primary: '#00F0FF',
-      darkMuted: '#08131A',
-      glow: 'rgba(0, 240, 255, 0.25)',
-      textAccent: '#70E1FF',
-      surface: 'rgba(13, 27, 36, 0.75)'
+      primary: BRUTALIST_THEMES.acid.primary,
+      darkMuted: BRUTALIST_THEMES.acid.darkMuted,
+      glow: BRUTALIST_THEMES.acid.glow,
+      textAccent: BRUTALIST_THEMES.acid.textAccent,
+      surface: BRUTALIST_THEMES.acid.surface
     };
     this.currentPalette = { ...this.defaultPalette };
   }
@@ -53,11 +109,54 @@ class ThemeEngine {
   }
 
   /**
-   * Applies pre-calculated or extracted creature palette
+   * Switches the active neo-brutalist theme across the application.
+   */
+  applyBrutalistTheme(themeId: string): ThemePalette {
+    const theme = BRUTALIST_THEMES[themeId] || BRUTALIST_THEMES.acid;
+    this.activeThemeId = theme.id;
+    const palette: ThemePalette = {
+      primary: theme.primary,
+      darkMuted: theme.darkMuted,
+      glow: theme.glow,
+      textAccent: theme.textAccent,
+      surface: theme.surface
+    };
+    this.injectVariables(palette);
+    try {
+      localStorage.setItem('icc_brutalist_theme', theme.id);
+    } catch {
+      // storage disabled
+    }
+    return palette;
+  }
+
+  /**
+   * Applies pre-calculated or extracted creature palette without allowing blue overrides.
    */
   async applyCreatureTheme(imageUrl?: string | null, fallbackPalette?: ThemePalette): Promise<ThemePalette> {
+    // If a non-blue brutalist theme is already chosen, maintain the chosen brutalist accent
+    const savedTheme = BRUTALIST_THEMES[this.activeThemeId] || BRUTALIST_THEMES.acid;
+
     if (fallbackPalette) {
-      this.injectVariables(fallbackPalette);
+      // Check if fallbackPalette is blue/cyan (e.g. #00D2FF or #00F0FF)
+      const isBlue =
+        fallbackPalette.primary.toLowerCase().includes('00d2ff') ||
+        fallbackPalette.primary.toLowerCase().includes('00f0ff') ||
+        fallbackPalette.primary.toLowerCase().includes('00d') ||
+        fallbackPalette.primary.toLowerCase().includes('38bdf8');
+
+      const sanitized: ThemePalette = isBlue
+        ? {
+            primary: savedTheme.primary,
+            darkMuted: savedTheme.darkMuted,
+            glow: savedTheme.glow,
+            textAccent: savedTheme.textAccent,
+            surface: savedTheme.surface
+          }
+        : fallbackPalette;
+
+      this.injectVariables(sanitized);
+      return sanitized;
     }
 
     if (!imageUrl || typeof window === 'undefined') {
@@ -79,17 +178,21 @@ class ThemeEngine {
       const dominant = colorThief.getColor(img);
       const palette = colorThief.getPalette(img, 4);
 
-      const primaryHex = this.rgbToHex(dominant[0], dominant[1], dominant[2]);
-      const darkTriplet = palette && palette[1] ? palette[1] : [10, 20, 30];
+      // If dominant is heavily blue (B > R * 1.3 && B > G), override with chosen brutalist accent
+      const [r, g, b] = dominant;
+      const isHeavilyBlue = b > 140 && b > r * 1.2 && b > g * 1.1;
+
+      const primaryHex = isHeavilyBlue ? savedTheme.primary : this.rgbToHex(r, g, b);
+      const darkTriplet = palette && palette[1] ? palette[1] : [16, 17, 20];
       const darkHex = this.rgbToHex(
-        Math.min(darkTriplet[0], 35),
-        Math.min(darkTriplet[1], 35),
-        Math.min(darkTriplet[2], 45)
+        Math.min(darkTriplet[0], 25),
+        Math.min(darkTriplet[1], 25),
+        Math.min(darkTriplet[2], 25)
       );
 
-      const textAccentHex = this.adjustBrightness(primaryHex, 0.4);
-      const glowRgba = `rgba(${dominant[0]}, ${dominant[1]}, ${dominant[2]}, 0.28)`;
-      const surfaceRgba = `rgba(${Math.min(darkTriplet[0], 25)}, ${Math.min(darkTriplet[1], 30)}, ${Math.min(darkTriplet[2], 40)}, 0.8)`;
+      const textAccentHex = isHeavilyBlue ? savedTheme.textAccent : this.adjustBrightness(primaryHex, 0.35);
+      const glowRgba = isHeavilyBlue ? savedTheme.glow : `rgba(${r}, ${g}, ${b}, 0.22)`;
+      const surfaceRgba = '#121316';
 
       const newTheme: ThemePalette = {
         primary: primaryHex,
@@ -101,12 +204,7 @@ class ThemeEngine {
 
       this.injectVariables(newTheme);
       return newTheme;
-    } catch (err) {
-      // Graceful fallback to fallbackPalette or defaultPalette
-      if (fallbackPalette) {
-        this.injectVariables(fallbackPalette);
-        return fallbackPalette;
-      }
+    } catch {
       this.injectVariables(this.defaultPalette);
       return this.defaultPalette;
     }

@@ -8,8 +8,14 @@ type SortOption = 'chronology-asc' | 'chronology-desc' | 'danger' | 'name';
 
 interface ExtinctionTimelineProps {
   creatures: Creature[];
-  onSelectCreature: (creature: Creature) => void;
+  onSelectCreature: (creature: Creature, initialTab?: 'overview' | 'map' | 'evolution' | 'clash') => void;
   onAddCreatures?: (newCreatures: Creature[]) => void;
+  streamingProgress?: {
+    current: number;
+    target: number;
+    isStreaming: boolean;
+  };
+  onStreamTo100?: () => void;
 }
 
 const ERAS = [
@@ -21,13 +27,20 @@ const ERAS = [
   { id: 'Modern', label: 'Modern Extant' }
 ];
 
-export function ExtinctionTimeline({ creatures, onSelectCreature, onAddCreatures }: ExtinctionTimelineProps) {
+export function ExtinctionTimeline({
+  creatures,
+  onSelectCreature,
+  onAddCreatures,
+  streamingProgress,
+  onStreamTo100
+}: ExtinctionTimelineProps) {
   const [selectedEra, setSelectedEra] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('chronology-asc');
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [isSearchingLive, setIsSearchingLive] = useState(false);
   const [liveSearchFeedback, setLiveSearchFeedback] = useState<string | null>(null);
+  const [isGlobalSimplified, setIsGlobalSimplified] = useState(false);
 
   const handleDiscoverLive = async () => {
     setIsDiscovering(true);
@@ -214,10 +227,16 @@ export function ExtinctionTimeline({ creatures, onSelectCreature, onAddCreatures
               )}
             </form>
 
-            {/* Discover Live Species Button */}
+            {/* Stream 100 Species / Ingest Button */}
             <button
-              onClick={handleDiscoverLive}
-              disabled={isDiscovering}
+              onClick={() => {
+                if (onStreamTo100) {
+                  onStreamTo100();
+                } else {
+                  handleDiscoverLive();
+                }
+              }}
+              disabled={streamingProgress?.isStreaming || isDiscovering}
               className="btn btn-secondary"
               style={{
                 display: 'flex',
@@ -225,16 +244,48 @@ export function ExtinctionTimeline({ creatures, onSelectCreature, onAddCreatures
                 gap: '8px',
                 padding: '8px 16px',
                 fontSize: '0.85rem',
-                borderRadius: 'var(--radius-full)'
+                borderRadius: 'var(--radius-full)',
+                border: streamingProgress?.isStreaming
+                  ? '1px solid var(--accent-primary)'
+                  : '1px solid var(--border-subtle)',
+                background: streamingProgress?.isStreaming
+                  ? 'rgba(0, 255, 102, 0.08)'
+                  : 'rgba(255, 255, 255, 0.04)'
               }}
               id="btn-discover-live"
+              title="Continuously stream research-grade specimens until 100 organisms are in the catalog"
             >
-              {isDiscovering ? (
+              {streamingProgress?.isStreaming || isDiscovering ? (
                 <Loader2 size={15} className="animate-spin-slow" style={{ color: 'var(--accent-primary)' }} />
               ) : (
                 <Compass size={15} style={{ color: 'var(--accent-primary)' }} />
               )}
-              <span>{isDiscovering ? 'Ingesting Live Species...' : 'Discover Live Species'}</span>
+              <span>
+                {streamingProgress?.isStreaming
+                  ? `Ingesting (${creatures.length}/100)...`
+                  : creatures.length >= 100
+                  ? `✓ 100 Species Cataloged (${creatures.length})`
+                  : 'Stream to 100 Species'}
+              </span>
+            </button>
+
+            {/* Global Simplify Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setIsGlobalSimplified(!isGlobalSimplified)}
+              className={`btn-subtle-brutalist ${isGlobalSimplified ? 'active' : ''}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                fontSize: '0.78rem'
+              }}
+              title="Toggle plain-English simplified summary across all creature cards"
+              id="btn-global-simplify"
+            >
+              <Sparkles size={14} />
+              <span>{isGlobalSimplified ? 'SIMPLIFIED (ON)' : 'SIMPLIFY ALL'}</span>
             </button>
 
             {/* Sort Select */}
@@ -301,16 +352,25 @@ export function ExtinctionTimeline({ creatures, onSelectCreature, onAddCreatures
           </div>
         )}
 
-        {/* Results Count */}
+        {/* Results Count & Stream Telemetry */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '20px',
           fontSize: '0.85rem',
-          color: 'var(--text-muted)'
+          color: 'var(--text-muted)',
+          flexWrap: 'wrap',
+          gap: '8px'
         }}>
-          <span>Showing <strong>{filteredCreatures.length}</strong> extraordinary organisms</span>
+          <div>
+            Showing <strong>{filteredCreatures.length}</strong> of <strong>{creatures.length}</strong> extraordinary organisms
+            {streamingProgress?.isStreaming && (
+              <span style={{ marginLeft: '8px', color: 'var(--accent-primary)', fontWeight: 600 }} className="animate-pulse">
+                • Streaming live research-grade observations ({creatures.length} / 100)...
+              </span>
+            )}
+          </div>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
@@ -322,18 +382,19 @@ export function ExtinctionTimeline({ creatures, onSelectCreature, onAddCreatures
           )}
         </div>
 
-        {/* Grid of Creatures */}
+        {/* Responsive Grid of Compact Centered Creature Cards */}
         {filteredCreatures.length > 0 ? (
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '24px'
+            gap: '20px'
           }}>
             {filteredCreatures.map((creature) => (
               <TimelineNodeCard
                 key={creature.id}
                 creature={creature}
                 onSelect={onSelectCreature}
+                isGloballySimplified={isGlobalSimplified}
               />
             ))}
           </div>

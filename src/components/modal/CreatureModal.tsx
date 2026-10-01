@@ -18,11 +18,18 @@ const TABS: { id: TabId; label: string; icon: typeof BookOpen }[] = [
 
 interface CreatureModalProps {
   creature: Creature | null;
+  initialTab?: TabId;
   onClose: () => void;
 }
 
-export function CreatureModal({ creature, onClose }: CreatureModalProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('overview');
+export function CreatureModal({ creature, initialTab = 'overview', onClose }: CreatureModalProps) {
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, creature]);
 
   // Trigger dynamic theme extraction on mount
   useEffect(() => {
@@ -74,15 +81,18 @@ export function CreatureModal({ creature, onClose }: CreatureModalProps) {
       aria-labelledby="modal-creature-title"
     >
       <div
-        className="glass-panel glow-border"
+        className="brutalist-modal"
+        onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
         style={{
           width: '100%',
-          maxWidth: '920px',
-          maxHeight: '90vh',
+          maxWidth: '1060px',
+          maxHeight: '92vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          backgroundColor: 'var(--surface-card)',
+          backgroundColor: '#0D0E12',
+          border: '2px solid var(--brutalist-border)',
+          boxShadow: '10px 10px 0px rgba(0, 0, 0, 0.95)',
           position: 'relative'
         }}
       >
@@ -100,6 +110,9 @@ export function CreatureModal({ creature, onClose }: CreatureModalProps) {
               src={creature.photoUrl}
               alt={creature.commonName}
               referrerPolicy="no-referrer"
+              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80';
+              }}
               style={{
                 width: '56px',
                 height: '56px',
@@ -142,27 +155,23 @@ export function CreatureModal({ creature, onClose }: CreatureModalProps) {
 
           <button
             onClick={onClose}
-            className="btn btn-ghost"
-            style={{
-              padding: '8px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+            className="btn-subtle-brutalist"
+            style={{ padding: '6px 12px', fontSize: '0.76rem', gap: '4px' }}
             id="btn-close-modal"
             aria-label="Close dialog"
           >
-            <X size={22} />
+            <X size={14} />
+            <span>Close</span>
           </button>
         </div>
 
-        {/* Modal Navigation Tabs */}
+        {/* Modal Navigation Tabs (Subtle Buttons: Icons with Label Text) */}
         <div style={{
           display: 'flex',
-          borderBottom: '1px solid var(--border-subtle)',
-          padding: '0 24px',
-          background: 'rgba(0, 0, 0, 0.2)',
+          gap: '8px',
+          borderBottom: '1.5px solid var(--brutalist-border)',
+          padding: '10px 24px',
+          background: '#090A0D',
           overflowX: 'auto',
           scrollbarWidth: 'none'
         }}>
@@ -173,26 +182,18 @@ export function CreatureModal({ creature, onClose }: CreatureModalProps) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                className={`btn-subtle-brutalist ${isActive ? 'active' : ''}`}
                 style={{
+                  padding: '6px 14px',
+                  fontSize: '0.76rem',
+                  borderRadius: '4px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
-                  padding: '14px 18px',
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: `2px solid ${isActive ? 'var(--accent-primary)' : 'transparent'}`,
-                  color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  fontWeight: isActive ? 700 : 500,
-                  fontSize: '0.9rem',
-                  fontFamily: 'var(--font-display)',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all var(--transition-fast)',
-                  outline: 'none'
+                  gap: '6px'
                 }}
                 id={`tab-${tab.id}`}
               >
-                <Icon size={16} />
+                <Icon size={13} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -205,7 +206,9 @@ export function CreatureModal({ creature, onClose }: CreatureModalProps) {
           overflowY: 'auto',
           flex: 1
         }}>
-          {activeTab === 'overview' && <OverviewTab creature={creature} />}
+          {activeTab === 'overview' && (
+            <OverviewTab creature={creature} onSwitchTab={(tab) => setActiveTab(tab)} />
+          )}
           {activeTab === 'map' && <OccurrenceMapTab creature={creature} />}
           {activeTab === 'evolution' && <FutureAdaptationTab creature={creature} />}
           {activeTab === 'clash' && <CreatureClashTab creature={creature} />}
