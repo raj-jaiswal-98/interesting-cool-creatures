@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { CREATURE_CATALOG } from '../../data/creatureCatalog';
 import { getCreaturePersonalityTags, getCreatureTinyFact } from '../../utils/personality';
+import { formatCreatureLength, formatCreatureWeight } from '../../utils/formatters';
 import type { Creature } from '../../types/creature';
 
 interface TimelineNodeCardProps {
@@ -208,7 +209,7 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
             LENGTH
           </span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-            {creature.stats?.lengthMeters ? `${creature.stats.lengthMeters}m` : 'Var'}
+            {formatCreatureLength(creature.stats?.lengthMeters, true)}
           </span>
         </div>
 
@@ -217,11 +218,7 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
             WEIGHT
           </span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.76rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-            {creature.stats?.weightKg
-              ? creature.stats.weightKg >= 1000
-                ? `${(creature.stats.weightKg / 1000).toFixed(1)}t`
-                : `${creature.stats.weightKg}kg`
-              : '<1g'}
+            {formatCreatureWeight(creature.stats?.weightKg, true)}
           </span>
         </div>
 

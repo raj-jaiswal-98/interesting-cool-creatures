@@ -21,6 +21,12 @@ import {
   getCreatureHumanScale,
   getCreaturePersonalityTags
 } from '../../utils/personality';
+import {
+  formatCreatureLength,
+  formatCreatureWeight,
+  formatDangerLevel,
+  formatExtinctionYear
+} from '../../utils/formatters';
 import type { Creature } from '../../types/creature';
 import type { NormalizedCreature } from '../../types/normalizedCreature';
 import type { TaxonomyTranslation } from '../../types/ai';
@@ -194,7 +200,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 backdropFilter: 'blur(8px)'
               }}
             >
-              {isExtant ? 'LIVING SPECIES' : 'EXTINCT'}
+              {isExtant ? 'LIVING SPECIES' : `EXTINCT • ${formatExtinctionYear(creature.extinctionYear, true)}`}
             </span>
           </div>
 
@@ -242,10 +248,10 @@ export function OverviewTab({ creature }: OverviewTabProps) {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-                <ShieldAlert size={13} style={{ color: threatColor }} />
-                <span>THREAT LEVEL</span>
+                <ShieldAlert size={13} style={{ color: formatDangerLevel(creature.stats?.dangerLevel).color }} />
+                <span>THREAT: {formatDangerLevel(creature.stats?.dangerLevel).label.toUpperCase()}</span>
               </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.84rem', fontWeight: 800, color: threatColor }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.84rem', fontWeight: 800, color: formatDangerLevel(creature.stats?.dangerLevel).color }}>
                 {creature.stats?.dangerLevel || 5} / 10
               </span>
             </div>
@@ -254,7 +260,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 style={{
                   width: `${((creature.stats?.dangerLevel || 5) / 10) * 100}%`,
                   height: '100%',
-                  background: threatColor,
+                  background: formatDangerLevel(creature.stats?.dangerLevel).color,
                   borderRadius: '3px'
                 }}
               />
@@ -647,7 +653,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 <span>LENGTH / SIZE</span>
               </div>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                {creature.stats?.lengthMeters ? `${creature.stats.lengthMeters} m` : 'Variable'}
+                {formatCreatureLength(creature.stats?.lengthMeters, false)}
               </span>
             </div>
 
@@ -657,11 +663,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 <span>WEIGHT / MASS</span>
               </div>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                {creature.stats?.weightKg != null
-                  ? creature.stats.weightKg >= 1000
-                    ? `${(creature.stats.weightKg / 1000).toFixed(1)} tons`
-                    : `${creature.stats.weightKg} kg`
-                  : '< 1 g'}
+                {formatCreatureWeight(creature.stats?.weightKg, false)}
               </span>
             </div>
 
