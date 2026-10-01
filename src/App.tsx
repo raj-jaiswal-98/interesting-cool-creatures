@@ -29,21 +29,28 @@ export function AppContent() {
   const [modalInitialTab, setModalInitialTab] = useState<'overview' | 'map' | 'evolution' | 'clash'>('overview');
   const [activeTheme, setActiveTheme] = useState<string>('acid');
   const [aiStatus, setAiStatus] = useState<AIAvailabilityStatus | 'checking'>('checking');
+  
+  // Dynamic catalog goal randomized between 200 and 250 species
+  const [targetCount] = useState<number>(() => Math.floor(Math.random() * (250 - 200 + 1)) + 200);
   const [streamingProgress, setStreamingProgress] = useState<{
     current: number;
     target: number;
     isStreaming: boolean;
-  }>({
-    current: CREATURE_CATALOG.length,
-    target: 100,
-    isStreaming: true
+  }>(() => {
+    const initialTarget = Math.floor(Math.random() * (250 - 200 + 1)) + 200;
+    return {
+      current: CREATURE_CATALOG.length,
+      target: initialTarget,
+      isStreaming: true
+    };
   });
 
-  const startStreamingTo100 = () => {
-    setStreamingProgress((prev) => ({ ...prev, isStreaming: true }));
+  const startStreamingToTarget = (customTarget?: number) => {
+    const target = customTarget || streamingProgress.target || targetCount;
+    setStreamingProgress((prev) => ({ ...prev, target, isStreaming: true }));
 
     creatureResolver
-      .streamUntilTargetCount(100, (batch, totalSoFar) => {
+      .streamUntilTargetCount(target, (batch, totalSoFar) => {
         setCatalog((prev) => {
           const existingIds = new Set(prev.map((c) => c.id.toLowerCase()));
           const existingNames = new Set(prev.map((c) => c.scientificName.toLowerCase()));
@@ -54,11 +61,11 @@ export function AppContent() {
           );
           return [...prev, ...fresh];
         });
-        setStreamingProgress({
+        setStreamingProgress((prev) => ({
           current: totalSoFar,
-          target: 100,
-          isStreaming: totalSoFar < 100
-        });
+          target: prev.target,
+          isStreaming: totalSoFar < prev.target
+        }));
       })
       .then((finalCatalog) => {
         setCatalog((prev) => {
@@ -73,7 +80,7 @@ export function AppContent() {
         });
         setStreamingProgress((prev) => ({
           current: Math.max(prev.current, finalCatalog.length),
-          target: 100,
+          target: prev.target,
           isStreaming: false
         }));
       })
@@ -97,8 +104,8 @@ export function AppContent() {
       setAiStatus(status);
     });
 
-    // Automatically stream research-grade species until we have 100 creatures
-    startStreamingTo100();
+    // Automatically stream research-grade species until target (200-250) is reached
+    startStreamingToTarget();
   }, []);
 
   const [surpriseToast, setSurpriseToast] = useState<string | null>(null);
@@ -170,7 +177,7 @@ export function AppContent() {
       setSpotlightCreature(daily);
       if (daily) themeEngine.applyCreatureTheme(daily.photoUrl, daily.themePalette);
       setIsPureLiveMode(false);
-      startStreamingTo100();
+      startStreamingToTarget();
     }
   };
 
@@ -184,11 +191,11 @@ export function AppContent() {
           !existingNames.has(c.scientificName.toLowerCase())
       );
       const updated = [...prev, ...unique];
-      setStreamingProgress({
+      setStreamingProgress((sp) => ({
         current: updated.length,
-        target: 100,
+        target: Math.max(sp.target, updated.length),
         isStreaming: false
-      });
+      }));
       return updated;
     });
   };
@@ -434,7 +441,8 @@ export function AppContent() {
           }}
           onAddCreatures={handleAddDynamicCreatures}
           streamingProgress={streamingProgress}
-          onStreamTo100={startStreamingTo100}
+          onStreamToTarget={startStreamingToTarget}
+          onStreamTo100={startStreamingToTarget}
         />
       </main>
 

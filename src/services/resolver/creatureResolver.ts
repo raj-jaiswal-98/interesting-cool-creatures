@@ -268,11 +268,11 @@ export class CreatureResolver {
 
   /**
    * Continually streams unique research-grade creatures from public biodiversity APIs
-   * in progressive batches until targetCount (default 100) is reached.
+   * in progressive batches until targetCount (default 225, within 200-250 range) is reached.
    * Emits onBatchProgress as each batch resolves so UI updates progressively in real-time.
    */
   async streamUntilTargetCount(
-    targetCount = 100,
+    targetCount = 225,
     onBatchProgress?: (batch: Creature[], totalSoFar: number) => void
   ): Promise<Creature[]> {
     const cacheKey = `resolver:catalog_target_${targetCount}`;
@@ -300,7 +300,7 @@ export class CreatureResolver {
     }
 
     let page = 1;
-    const maxPages = 8;
+    const maxPages = 16;
 
     while (allCreatures.length < targetCount && page <= maxPages) {
       try {
@@ -350,6 +350,112 @@ export class CreatureResolver {
     }
 
     return allCreatures;
+  }
+
+  /**
+   * Fetches a specified count of unique creatures matching a specific category/habitat
+   * (e.g. 'marine', 'forest', 'aerial', 'volcanic', 'tundra', 'ancient', or 'all').
+   * Guaranteed to be distinct from existing catalog IDs and scientific names.
+   */
+  async fetchUniqueCreaturesForCategory(
+    category: string,
+    count = 7,
+    existingCreatures: Creature[] = []
+  ): Promise<Creature[]> {
+    const seenIds = new Set(existingCreatures.map((c) => c.id.toLowerCase()));
+    const seenNames = new Set(existingCreatures.map((c) => c.scientificName.toLowerCase()));
+    const results: Creature[] = [];
+
+    // Map category to iNaturalist / PBDB query parameters
+    let iconicTaxa = 'Aves,Mammalia,Reptilia,Amphibia,Actinopterygii,Mollusca,Insecta,Arachnida';
+    let queryTerm = '';
+    const isAncient = category === 'ancient' || category === 'prehistoric' || category === 'fossil';
+
+    if (category === 'marine' || category === 'ocean') {
+      iconicTaxa = 'Actinopterygii,Mollusca';
+    } else if (category === 'aerial' || category === 'bird' || category === 'birds') {
+      iconicTaxa = 'Aves';
+    } else if (category === 'forest' || category === 'mammal' || category === 'mammals') {
+      iconicTaxa = 'Mammalia';
+    } else if (category === 'volcanic' || category === 'extreme') {
+      iconicTaxa = 'Reptilia,Arachnida';
+      queryTerm = 'desert';
+    } else if (category === 'tundra' || category === 'polar') {
+      iconicTaxa = 'Aves,Mammalia';
+      queryTerm = 'arctic';
+    }
+
+    // If ancient, fetch from Paleobiology Database (PBDB)
+    if (isAncient) {
+      try {
+        const offset = Math.floor(Math.random() * 80) + 1;
+        const pbdbUrl = `https://paleobiodb.org/data1.2/taxa/list.json?is_extinct=true&limit=${Math.max(count * 2, 10)}&offset=${offset}&show=attr,time`;
+        const res = await fetch(pbdbUrl);
+        if (res.ok) {
+          const data = await res.json();
+          for (const rec of data.records || []) {
+            if (!rec.nam) continue;
+            const sciLower = rec.nam.toLowerCase();
+            const id = `pbdb:${rec.nam.toLowerCase().replace(/\s+/g, '-')}`;
+            if (seenIds.has(id) || seenNames.has(sciLower)) continue;
+
+            const normalized = await this.resolve(rec.nam);
+            const creature = normalizedToCreature(normalized);
+            if (creature) {
+              seenIds.add(id);
+              seenNames.add(sciLower);
+              results.push(creature);
+              if (results.length >= count) break;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[CreatureResolver] PBDB fetch for ancient category failed:', err);
+      }
+    }
+
+    // If not ancient or need more results, query iNaturalist with randomized page offset
+    let attempts = 0;
+    const maxAttempts = 5;
+    while (results.length < count && attempts < maxAttempts) {
+      attempts++;
+      const randomPage = Math.floor(Math.random() * 30) + 1;
+      try {
+        let url = `https://api.inaturalist.org/v1/observations?popular=true&has[]=photos&quality_grade=research&iconic_taxa=${iconicTaxa}&per_page=30&page=${randomPage}&order=desc&order_by=votes`;
+        if (queryTerm) {
+          url += `&q=${encodeURIComponent(queryTerm)}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) continue;
+
+        const data = await res.json();
+        for (const item of data.results || []) {
+          const creature = inaturalistObservationToCreature(item);
+          if (!creature) continue;
+
+          const sciLower = creature.scientificName.toLowerCase();
+          const idLower = creature.id.toLowerCase();
+          if (seenIds.has(idLower) || seenNames.has(sciLower)) continue;
+
+          if (category === 'marine') creature.habitatType = 'marine';
+          else if (category === 'aerial') creature.habitatType = 'aerial';
+          else if (category === 'volcanic') creature.habitatType = 'volcanic';
+          else if (category === 'tundra') creature.habitatType = 'tundra';
+          else if (category === 'forest') creature.habitatType = 'forest';
+
+          seenIds.add(idLower);
+          seenNames.add(sciLower);
+          results.push(creature);
+
+          if (results.length >= count) break;
+        }
+      } catch (err) {
+        console.warn(`[CreatureResolver] Error fetching unique creatures for category "${category}":`, err);
+      }
+    }
+
+    return results;
   }
 
   /**
