@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Clock, Compass, ShieldAlert, Ruler, Scale, ArrowRight } from 'lucide-react';
+import { Sparkles, Clock, Compass, ShieldAlert, Ruler, Scale, ArrowRight, Shuffle } from 'lucide-react';
 import { getTimeUntilNextSpotlight } from '../../utils/seedGenerator';
+import { getCreaturePersonalityTags, getCreatureTinyFact } from '../../utils/personality';
 import type { Creature } from '../../types/creature';
 
 interface SpotlightHeroProps {
   creature: Creature | null;
   onSelectCreature: (creature: Creature) => void;
+  onSurpriseMe?: () => void;
 }
 
-export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps) {
+export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: SpotlightHeroProps) {
   const [countdown, setCountdown] = useState(getTimeUntilNextSpotlight());
 
   useEffect(() => {
@@ -22,9 +24,15 @@ export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps
 
   const eraClass = `badge-${creature.era.toLowerCase()}`;
   const isExtant = creature.extinctionYear === null;
+  const personalityTags = getCreaturePersonalityTags(creature);
+  const tinyFact = getCreatureTinyFact(creature);
 
   return (
-    <section className="spotlight-section" style={{ position: 'relative', zIndex: 1, padding: '40px 0 20px' }}>
+    <section
+      id="spotlight-hero"
+      className="spotlight-section"
+      style={{ position: 'relative', zIndex: 1, padding: '36px 0 20px' }}
+    >
       <div className="container">
         {/* Top bar with Daily Spotlight indicator & live timer */}
         <div style={{
@@ -33,31 +41,30 @@ export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
-          marginBottom: '20px'
+          marginBottom: '16px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '28px',
-              height: '28px',
+              width: '24px',
+              height: '24px',
               borderRadius: '50%',
               background: 'var(--accent-primary)',
-              color: '#050B10',
-              boxShadow: '0 0 15px var(--accent-primary)'
+              color: '#050B10'
             }}>
-              <Sparkles size={16} />
+              <Sparkles size={14} />
             </span>
             <span style={{
               fontFamily: 'var(--font-mono)',
               textTransform: 'uppercase',
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               fontWeight: 700,
-              letterSpacing: '0.1em',
-              color: 'var(--accent-primary)'
+              letterSpacing: '0.08em',
+              color: 'var(--text-primary)'
             }}>
-              Creature of the Day • Daily Spotlight
+              Today's Discovery
             </span>
           </div>
 
@@ -65,15 +72,15 @@ export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: 'rgba(255, 255, 255, 0.04)',
             border: '1px solid var(--border-subtle)',
-            padding: '6px 14px',
+            padding: '5px 12px',
             borderRadius: 'var(--radius-full)',
-            fontSize: '0.82rem',
+            fontSize: '0.78rem',
             fontFamily: 'var(--font-mono)',
             color: 'var(--text-secondary)'
           }}>
-            <Clock size={14} style={{ color: 'var(--accent-primary)' }} />
+            <Clock size={13} style={{ color: 'var(--accent-primary)' }} />
             <span>Next in: </span>
             <strong style={{ color: 'var(--text-primary)' }}>
               {String(countdown.hours).padStart(2, '0')}h {String(countdown.minutes).padStart(2, '0')}m {String(countdown.seconds).padStart(2, '0')}s
@@ -81,14 +88,17 @@ export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps
           </div>
         </div>
 
-        {/* Hero Card */}
-        <div className="glass-panel glow-border" style={{
+        {/* Soft-Brutalist Hero Card (§ 8, 28) */}
+        <div className="glass-panel" style={{
           overflow: 'hidden',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: '0',
           position: 'relative',
-          background: 'linear-gradient(135deg, var(--surface-card) 0%, rgba(10, 20, 30, 0.85) 100%)'
+          borderRadius: 'var(--radius-card)',
+          border: '1.5px solid var(--border-subtle)',
+          background: 'linear-gradient(135deg, var(--surface-card) 0%, rgba(13, 17, 23, 0.95) 100%)',
+          boxShadow: 'var(--shadow-soft)'
         }}>
           {/* Visual Column */}
           <div style={{
@@ -98,7 +108,7 @@ export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.6) 100%)'
+            background: 'radial-gradient(circle at center, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.6) 100%)'
           }}>
             <img
               src={creature.photoUrl}
@@ -111,9 +121,8 @@ export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                filter: 'brightness(0.9) contrast(1.05)',
+                filter: 'brightness(0.92) contrast(1.04)',
                 transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
-                // viewTransitionName isn't in React's CSSProperties typings yet
                 ...({ viewTransitionName: 'creature-spotlight' } as React.CSSProperties)
               }}
               className="hero-creature-img"
@@ -122,137 +131,198 @@ export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps
             <div style={{
               position: 'absolute',
               inset: 0,
-              background: 'linear-gradient(to top, rgba(5, 11, 16, 0.95) 0%, rgba(5, 11, 16, 0.2) 50%, transparent 100%)',
+              background: 'linear-gradient(to top, rgba(8, 10, 14, 0.9) 0%, rgba(8, 10, 14, 0.15) 50%, transparent 100%)',
               pointerEvents: 'none'
             }} />
 
-            {/* Quick Status Floater */}
+            {/* Personality Tags Floater (§ 9) */}
             <div style={{
               position: 'absolute',
-              bottom: '20px',
-              left: '20px',
-              right: '20px',
+              bottom: '16px',
+              left: '16px',
+              right: '16px',
               display: 'flex',
-              gap: '8px',
+              gap: '6px',
               flexWrap: 'wrap'
             }}>
-              <span className={`badge ${eraClass}`}>
-                {creature.era} Era
-              </span>
-              <span className={`badge ${isExtant ? 'badge-extant' : 'badge-extinct'}`}>
-                {isExtant ? 'Living Species' : `Extinct (~${Math.abs(creature.extinctionYear!).toLocaleString()} ${creature.extinctionYear! < 0 ? 'BCE' : 'CE'})`}
-              </span>
-              <span className="badge" style={{ background: 'rgba(0,0,0,0.6)', color: 'var(--text-secondary)', borderColor: 'rgba(255,255,255,0.1)' }}>
-                <Compass size={12} style={{ marginRight: '4px' }} />
-                {creature.habitat}
+              {personalityTags.map((tag, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    background: 'rgba(8, 10, 14, 0.75)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#F8FAFC',
+                    padding: '3px 10px',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: '0.74rem',
+                    fontWeight: 600
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+              <span className={`badge ${eraClass}`} style={{ fontSize: '0.72rem' }}>
+                {creature.era}
               </span>
             </div>
           </div>
 
           {/* Info Column */}
           <div style={{
-            padding: '36px',
+            padding: '32px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            gap: '24px'
+            gap: '20px'
           }}>
             <div>
               <p style={{
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.85rem',
-                color: 'var(--accent-primary)',
-                letterSpacing: '0.05em',
-                marginBottom: '6px'
+                fontSize: '0.82rem',
+                color: 'var(--text-muted)',
+                letterSpacing: '0.04em',
+                marginBottom: '4px',
+                fontStyle: 'italic'
               }}>
                 {creature.scientificName}
               </p>
               <h1 style={{
-                fontSize: 'clamp(2rem, 4vw, 3rem)',
+                fontSize: 'clamp(2rem, 3.6vw, 2.8rem)',
                 fontWeight: 800,
                 lineHeight: 1.1,
-                marginBottom: '16px',
+                marginBottom: '14px',
                 letterSpacing: '-0.02em'
               }}>
                 {creature.commonName}
               </h1>
-              <p style={{
-                color: 'var(--text-secondary)',
-                fontSize: '1.05rem',
-                lineHeight: 1.65,
-                marginBottom: '24px'
-              }}>
-                {creature.description}
-              </p>
 
-              {/* Stat Pills */}
+              {/* The "Tiny Fact" Highlight Pattern (§ 10) */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderLeft: '3px solid var(--accent-primary)',
+                padding: '12px 16px',
+                borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
+                marginBottom: '20px'
+              }}>
+                <div style={{
+                  fontSize: '0.72rem',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--accent-primary)',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  marginBottom: '4px'
+                }}>
+                  A tiny fact
+                </div>
+                <p style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.94rem',
+                  lineHeight: 1.55,
+                  margin: 0
+                }}>
+                  {tinyFact}
+                </p>
+              </div>
+
+              {/* Simplified Stat Chips */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                gap: '12px',
-                marginBottom: '24px'
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '10px',
+                marginBottom: '20px'
               }}>
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.04)',
+                  background: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid var(--border-subtle)',
-                  padding: '10px 14px',
-                  borderRadius: 'var(--radius-md)'
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-sm)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
-                    <Ruler size={13} />
-                    <span>EST. LENGTH</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '2px' }}>
+                    <Ruler size={12} />
+                    <span>LENGTH</span>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>
-                    {creature.stats?.lengthMeters ? `${creature.stats.lengthMeters} m` : 'Unknown'}
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                    {creature.stats?.lengthMeters ? `${creature.stats.lengthMeters}m` : 'Var'}
                   </div>
                 </div>
 
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.04)',
+                  background: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid var(--border-subtle)',
-                  padding: '10px 14px',
-                  borderRadius: 'var(--radius-md)'
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-sm)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
-                    <Scale size={13} />
-                    <span>EST. WEIGHT</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '2px' }}>
+                    <Scale size={12} />
+                    <span>WEIGHT</span>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
                     {creature.stats?.weightKg != null
                       ? creature.stats.weightKg >= 1000
-                        ? `${(creature.stats.weightKg / 1000).toFixed(1)} tons`
-                        : `${creature.stats.weightKg} kg`
-                      : 'Unknown'}
+                        ? `${(creature.stats.weightKg / 1000).toFixed(1)}t`
+                        : `${creature.stats.weightKg}kg`
+                      : 'Light'}
                   </div>
                 </div>
 
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.04)',
+                  background: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid var(--border-subtle)',
-                  padding: '10px 14px',
-                  borderRadius: 'var(--radius-md)'
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-sm)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '4px' }}>
-                    <ShieldAlert size={13} style={{ color: '#F87171' }} />
-                    <span>THREAT INDEX</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '2px' }}>
+                    <ShieldAlert size={12} style={{ color: '#F87171' }} />
+                    <span>THREAT</span>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#F87171' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#F87171' }}>
                     {creature.stats?.dangerLevel || 5} / 10
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Action Bar */}
-            <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+            {/* Action Bar: Verb-First "Meet it" and "Surprise me" (§ 7, § 44) */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 className="btn btn-primary"
                 onClick={() => onSelectCreature(creature)}
-                id="btn-explore-spotlight"
+                id="btn-meet-creature"
+                style={{
+                  fontSize: '0.92rem',
+                  padding: '10px 22px',
+                  borderRadius: 'var(--radius-button)',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
               >
-                <span>Deep-Dive Exploration</span>
-                <ArrowRight size={18} />
+                <span>Meet it</span>
+                <ArrowRight size={17} />
               </button>
+
+              {onSurpriseMe && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={onSurpriseMe}
+                  style={{
+                    fontSize: '0.85rem',
+                    padding: '10px 16px',
+                    borderRadius: 'var(--radius-button)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                  title="Discover another creature (Space)"
+                >
+                  <Shuffle size={14} />
+                  <span>Surprise me</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -260,3 +330,4 @@ export function SpotlightHero({ creature, onSelectCreature }: SpotlightHeroProps
     </section>
   );
 }
+

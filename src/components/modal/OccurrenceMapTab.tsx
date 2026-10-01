@@ -126,10 +126,10 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
         <div>
           <h4 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Globe size={18} style={{ color: 'var(--accent-primary)' }} />
-            <span>Geographic Occurrence & Fossil Distribution</span>
+            <span>Where it's been seen</span>
           </h4>
           <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            Real-world validated specimen occurrences & fossil bed locations mapped via GBIF & paleontological records.
+            Real-world documented sightings and fossil locations across the globe.
           </p>
         </div>
 
@@ -202,7 +202,7 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
       {/* List of Coordinate Occurrences */}
       <div>
         <h5 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '10px', color: 'var(--text-secondary)' }}>
-          Documented Specimen Coordinates ({coordinates.length})
+          Sightings & specimen locations ({coordinates.length})
         </h5>
         <div style={{
           display: 'grid',

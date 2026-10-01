@@ -516,6 +516,18 @@ Respond with pure JSON only in this exact schema, without markdown formatting or
 
 
   /**
+   * General-purpose on-device text prompt with Gemini Nano.
+   */
+  async prompt(text: string): Promise<string> {
+    const session = await this.initSession();
+    if (session) {
+      const res = await session.prompt(text);
+      return res.trim();
+    }
+    throw new Error('Chrome AI session unavailable');
+  }
+
+  /**
    * Destroys active AI session to reclaim memory.
    */
   destroySession(): void {
