@@ -5,15 +5,16 @@ import { OccurrenceMapTab } from './OccurrenceMapTab';
 import { FutureAdaptationTab } from './FutureAdaptationTab';
 import { CreatureClashTab } from './CreatureClashTab';
 import { themeEngine } from '../../services/theme/themeEngine';
+import { getCreaturePersonalityTags } from '../../utils/personality';
 import type { Creature } from '../../types/creature';
 
 type TabId = 'overview' | 'map' | 'evolution' | 'clash';
 
 const TABS: { id: TabId; label: string; icon: typeof BookOpen }[] = [
-  { id: 'overview', label: 'Overview', icon: BookOpen },
-  { id: 'map', label: 'Occurrence Map', icon: Globe },
-  { id: 'evolution', label: 'Future Adaptation (AI)', icon: Dna },
-  { id: 'clash', label: 'Creature Clash', icon: Swords },
+  { id: 'overview', label: 'About it', icon: BookOpen },
+  { id: 'map', label: "Where it's been seen", icon: Globe },
+  { id: 'evolution', label: 'Imagine', icon: Dna },
+  { id: 'clash', label: 'Who wins?', icon: Swords },
 ];
 
 interface CreatureModalProps {
@@ -57,6 +58,7 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
 
   const isExtant = creature.extinctionYear === null;
   const eraClass = `badge-${creature.era.toLowerCase()}`;
+  const personalityTags = getCreaturePersonalityTags(creature);
 
   return (
     <div
@@ -92,6 +94,7 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
           overflow: 'hidden',
           backgroundColor: '#0D0E12',
           border: '2px solid var(--brutalist-border)',
+          borderRadius: 'var(--radius-card)',
           boxShadow: '10px 10px 0px rgba(0, 0, 0, 0.95)',
           position: 'relative'
         }}
@@ -114,11 +117,11 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
                 e.currentTarget.src = 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80';
               }}
               style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: 'var(--radius-sm)',
+                width: '60px',
+                height: '60px',
+                borderRadius: '12px',
                 objectFit: 'cover',
-                border: '1px solid var(--accent-primary)',
+                border: '1.5px solid var(--accent-primary)',
                 boxShadow: '0 0 15px var(--bg-glow)'
               }}
             />
@@ -131,37 +134,50 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
                   {isExtant ? 'Living Species' : 'Extinct'}
                 </span>
               </div>
-              <h2
-                id="modal-creature-title"
-                style={{
-                  fontSize: '1.4rem',
-                  fontWeight: 800,
-                  color: 'var(--text-primary)',
-                  margin: 0
-                }}
-              >
-                {creature.commonName}
-              </h2>
-              <span style={{
-                fontSize: '0.85rem',
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--accent-primary)',
-                fontStyle: 'italic'
-              }}>
-                {creature.scientificName}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
+                <h2
+                  id="modal-creature-title"
+                  style={{
+                    fontSize: '1.4rem',
+                    fontWeight: 800,
+                    color: 'var(--text-primary)',
+                    margin: 0
+                  }}
+                >
+                  {creature.commonName}
+                </h2>
+                <span style={{
+                  fontSize: '0.85rem',
+                  fontFamily: 'var(--font-mono)',
+                  color: 'var(--accent-primary)',
+                  fontStyle: 'italic'
+                }}>
+                  {creature.scientificName}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                {personalityTags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="personality-tag"
+                    style={{ fontSize: '0.72rem', padding: '2px 8px' }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
           <button
             onClick={onClose}
             className="btn-subtle-brutalist"
-            style={{ padding: '6px 12px', fontSize: '0.76rem', gap: '4px' }}
+            style={{ padding: '8px 16px', fontSize: '0.82rem', gap: '6px', borderRadius: 'var(--radius-button)' }}
             id="btn-close-modal"
             aria-label="Close dialog"
           >
-            <X size={14} />
-            <span>Close</span>
+            <X size={15} />
+            <span>Done</span>
           </button>
         </div>
 

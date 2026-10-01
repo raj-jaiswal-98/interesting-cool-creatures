@@ -49,10 +49,10 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
       <div>
         <h4 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
           <Swords size={20} style={{ color: '#F87171' }} />
-          <span>Creature Clash: Ecological Arena</span>
+          <span>Who wins? (Battle Arena)</span>
         </h4>
         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-          Pit {creature.commonName} against any other apex organism across Earth's history. The duel engine simulates physical mass, biome advantages, and predatory weaponry.
+          Pit {creature.commonName} against another extraordinary organism to see who prevails based on biological adaptations, biome traits, and defense mechanisms.
         </p>
       </div>
 
@@ -186,7 +186,8 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
             background: 'linear-gradient(135deg, #F87171 0%, #EF4444 100%)',
             color: '#FFFFFF',
             boxShadow: '0 0 20px rgba(239, 68, 68, 0.4)',
-            padding: '12px 28px'
+            padding: '12px 28px',
+            borderRadius: 'var(--radius-button)'
           }}
           id="btn-run-clash"
         >
@@ -198,7 +199,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
           ) : (
             <>
               <Swords size={18} />
-              <span>Initiate Ecological Clash</span>
+              <span>Battle now! 💥</span>
             </>
           )}
         </button>

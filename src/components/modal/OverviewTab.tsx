@@ -18,6 +18,7 @@ import {
 import { chromeAI } from '../../services/ai/chromeAIService';
 import { creatureResolver } from '../../services/resolver/creatureResolver';
 import { getSimplifiedDossier } from '../../utils/creatureSimplifier';
+import { getCreatureFamilySummary } from '../../utils/personality';
 import type { Creature } from '../../types/creature';
 import type { NormalizedCreature } from '../../types/normalizedCreature';
 import type { TaxonomyTranslation } from '../../types/ai';
@@ -32,6 +33,9 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [normalized, setNormalized] = useState<NormalizedCreature | null>(null);
   const [isSimplified, setIsSimplified] = useState(false);
+  const [activeCuriousPrompt, setActiveCuriousPrompt] = useState<string | null>(null);
+  const [curiousAnswer, setCuriousAnswer] = useState<string | null>(null);
+  const [isLoadingCurious, setIsLoadingCurious] = useState(false);
 
   const dossier = getSimplifiedDossier(creature);
   const isExtant = creature.extinctionYear === null;
@@ -46,6 +50,28 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
       isMounted = false;
     };
   }, [creature.id, creature.scientificName]);
+
+  const handleCuriousPrompt = async (promptQuestion: string) => {
+    setActiveCuriousPrompt(promptQuestion);
+    setIsLoadingCurious(true);
+    setCuriousAnswer(null);
+    try {
+      const res = await chromeAI.prompt(
+        `In 2 short, fun, plain-English sentences for a curious museum visitor, answer: "${promptQuestion}" for the creature ${creature.commonName} (${creature.scientificName}, ${creature.description}).`
+      );
+      setCuriousAnswer(res);
+    } catch {
+      if (promptQuestion.toLowerCase().includes('weird')) {
+        setCuriousAnswer(dossier.funFact || `${creature.commonName} has strange evolutionary adaptations suited for life in ${creature.habitat}.`);
+      } else if (promptQuestion.toLowerCase().includes('survive')) {
+        setCuriousAnswer(`It feeds on ${creature.diet.toLowerCase()} and relies on its standout adaptation: ${dossier.superpower.toLowerCase()}.`);
+      } else {
+        setCuriousAnswer(`${dossier.superpower}. It thrived in the ${creature.era} era!`);
+      }
+    } finally {
+      setIsLoadingCurious(false);
+    }
+  };
 
   const handleSimplifyWithAI = async () => {
     setIsLoadingAI(true);
@@ -255,7 +281,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 12px' }}
             >
               <MapPin size={13} style={{ color: 'var(--accent-primary)' }} />
-              <span>Explore Occurrence Map</span>
+              <span>Where it's been seen →</span>
             </button>
 
             <button
@@ -265,7 +291,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 12px' }}
             >
               <Swords size={13} style={{ color: '#FFB800' }} />
-              <span>Launch Creature Clash</span>
+              <span>Who wins? (Battle) →</span>
             </button>
 
             <button
@@ -275,7 +301,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
               style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 12px' }}
             >
               <Dna size={13} style={{ color: '#A855F7' }} />
-              <span>Predict Future Adaptation</span>
+              <span>Imagine future form →</span>
             </button>
           </div>
         )}
@@ -299,7 +325,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
             {creature.commonName}
           </h3>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
             <span
               style={{
                 fontSize: '0.95rem',
@@ -326,6 +352,19 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
                 Class {creature.taxonomy.class}
               </span>
             )}
+          </div>
+
+          <div style={{
+            fontSize: '0.85rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.4,
+            padding: '6px 12px',
+            background: 'rgba(255, 255, 255, 0.03)',
+            borderRadius: '6px',
+            border: '1px solid var(--border-subtle)',
+            display: 'inline-block'
+          }}>
+            {getCreatureFamilySummary(creature)}
           </div>
         </div>
 
@@ -409,6 +448,77 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
           )}
         </div>
 
+        {/* Curious? Conversational AI Prompt Chips */}
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-card)',
+          padding: '12px 16px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.95rem' }}>✨</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Curious?
+            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Ask a question
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {[
+              { label: 'Why is it weird?', q: 'Why is this creature weird or unusual?' },
+              { label: 'How does it survive?', q: 'How does it survive and find food?' },
+              { label: "What's its strangest trick?", q: "What is its single strangest defense or biological trick?" }
+            ].map((chip, idx) => {
+              const isActive = activeCuriousPrompt === chip.q;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleCuriousPrompt(chip.q)}
+                  disabled={isLoadingCurious}
+                  className="btn-subtle-brutalist"
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: '0.78rem',
+                    borderRadius: 'var(--radius-button)',
+                    background: isActive ? 'rgba(0, 240, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                    borderColor: isActive ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                    color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)'
+                  }}
+                >
+                  {chip.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {(isLoadingCurious || curiousAnswer) && (
+            <div style={{
+              marginTop: '10px',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              background: 'rgba(0, 240, 255, 0.04)',
+              border: '1px solid rgba(0, 240, 255, 0.18)',
+              fontSize: '0.86rem',
+              lineHeight: 1.5,
+              color: 'var(--text-primary)'
+            }}>
+              {isLoadingCurious ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-primary)' }}>
+                  <Loader2 size={13} className="animate-spin-slow" />
+                  <span>Thinking with on-device AI...</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ color: 'var(--accent-primary)', fontSize: '1rem', lineHeight: 1 }}>💬</span>
+                  <div>{curiousAnswer}</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Biological Metrics Grid */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
@@ -476,24 +586,37 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
           </div>
         </div>
 
-        {/* Taxonomic Hierarchy */}
+        {/* Taxonomic Hierarchy - Progressive Disclosure */}
         {creature.taxonomy && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                TAXONOMIC LINEAGE
-              </span>
-            </div>
+          <details
+            style={{
+              background: 'rgba(0, 0, 0, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '8px',
+              padding: '10px 14px'
+            }}
+          >
+            <summary style={{
+              cursor: 'pointer',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              color: 'var(--text-muted)',
+              outline: 'none',
+              userSelect: 'none'
+            }}>
+              ▸ Detailed Scientific Taxonomy (Darwin Core)
+            </summary>
 
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
                 gap: '6px',
-                background: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '6px',
-                padding: '10px 12px'
+                marginTop: '10px',
+                paddingTop: '8px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.06)'
               }}
             >
               {Object.entries(creature.taxonomy).map(([rank, name]) => (
@@ -507,7 +630,7 @@ export function OverviewTab({ creature, onSwitchTab }: OverviewTabProps) {
                 </div>
               ))}
             </div>
-          </div>
+          </details>
         )}
 
         {/* Data Provenance & Scientific Links (Icons with Label Text) */}

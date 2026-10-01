@@ -120,11 +120,11 @@ export function ExtinctionTimeline({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <Sparkles size={18} style={{ color: 'var(--accent-primary)' }} />
             <h2 style={{ fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-              Evolutionary Timeline & Catalog
+              Discover Weird Life
             </h2>
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '650px' }}>
-            Filter through Earth's geological epochs—from 250-million-year-old apex reptiles to bizarre modern abyssal organisms.
+            Its story across Earth's eras—from ancient apex giants to bizarre deep-sea creatures alive today.
           </p>
         </div>
 
@@ -187,7 +187,7 @@ export function ExtinctionTimeline({
                 <Search size={15} style={{ color: 'var(--text-muted)', marginRight: '8px' }} />
                 <input
                   type="text"
-                  placeholder="Search species or prompt AI (e.g. 'alien deep sea')..."
+                  placeholder="Find something weird... (press / to search)"
                   value={searchQuery}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                   style={{
@@ -452,28 +452,30 @@ export function ExtinctionTimeline({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '16px'
+            gap: '16px',
+            borderRadius: 'var(--radius-card)',
+            border: '2px dashed var(--border-subtle)'
           }}>
-            <Filter size={40} style={{ color: 'var(--text-muted)' }} />
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700 }}>
-              {searchQuery ? `No local species found for "${searchQuery}"` : 'No organisms match your filter criteria'}
+            <div style={{ fontSize: '2.5rem', marginBottom: '4px' }}>🔍</div>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>
+              {searchQuery ? `Nothing strange here for "${searchQuery}"` : 'Nothing strange here yet'}
             </h3>
-            <p style={{ color: 'var(--text-secondary)', maxWidth: '480px', fontSize: '0.9rem' }}>
+            <p style={{ color: 'var(--text-secondary)', maxWidth: '440px', fontSize: '0.95rem', lineHeight: 1.5 }}>
               {searchQuery
-                ? `You can query global scientific databases (iNaturalist, GBIF, Paleobiology Database) to ingest "${searchQuery}" into your explorer dynamically.`
-                : 'Try searching for a different keyword or reset your era selection.'}
+                ? `We couldn't find an organism matching that in the catalog. Would you like to ask the global live networks (GBIF & iNaturalist)?`
+                : 'Try picking another geological era or reset your filters to see all weird specimens.'}
             </p>
 
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '8px' }}>
               {searchQuery && (
                 <button
                   className="btn btn-primary"
                   onClick={() => handleLiveSearch()}
                   disabled={isSearchingLive}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRadius: 'var(--radius-button)' }}
                 >
                   {isSearchingLive ? <Loader2 size={16} className="animate-spin-slow" /> : <Globe size={16} />}
-                  <span>Search Worldwide Live Biodiversity</span>
+                  <span>Search Worldwide Live</span>
                 </button>
               )}
 
@@ -484,8 +486,9 @@ export function ExtinctionTimeline({
                   setSearchQuery('');
                   setLiveSearchFeedback(null);
                 }}
+                style={{ borderRadius: 'var(--radius-button)' }}
               >
-                Reset All Filters
+                Reset filters →
               </button>
             </div>
           </div>

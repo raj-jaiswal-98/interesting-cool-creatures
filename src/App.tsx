@@ -101,6 +101,51 @@ export function AppContent() {
     startStreamingTo100();
   }, []);
 
+  const [surpriseToast, setSurpriseToast] = useState<string | null>(null);
+
+  const handleSurpriseMe = () => {
+    if (catalog.length === 0) return;
+    const randomIdx = Math.floor(Math.random() * catalog.length);
+    const chosen = catalog[randomIdx];
+
+    setSurpriseToast('Finding you a weird one...');
+    setTimeout(() => {
+      setSpotlightCreature(chosen);
+      themeEngine.applyCreatureTheme(chosen.photoUrl, chosen.themePalette);
+      setSurpriseToast(null);
+
+      const hero = document.getElementById('spotlight-hero');
+      if (hero) {
+        hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 280);
+  };
+
+  // Global hotkeys: Space -> Surprise Me, / -> Focus search, Esc -> Close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        handleSurpriseMe();
+      } else if (e.key === '/') {
+        e.preventDefault();
+        const searchInput = document.getElementById('input-species-search');
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [catalog]);
+
   const [isPureLiveMode, setIsPureLiveMode] = useState<boolean>(false);
 
   const handleTogglePureLiveMode = async () => {
@@ -159,12 +204,40 @@ export function AppContent() {
         />
       )}
 
-      {/* Global Navigation Header */}
+      {/* Playful Surprise Me Status Floating Toast */}
+      {surpriseToast && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            background: 'var(--surface-card)',
+            color: 'var(--text-primary)',
+            border: '1.5px solid var(--accent-primary)',
+            padding: '8px 20px',
+            borderRadius: 'var(--radius-full)',
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            animation: 'fadeIn 0.2s ease'
+          }}
+        >
+          <span>✨</span>
+          <span>{surpriseToast}</span>
+        </div>
+      )}
+
+      {/* Global Navigation Header (Simplified Museum Style § 5) */}
       <header style={{
         position: 'relative',
         zIndex: 10,
         borderBottom: '1px solid var(--border-subtle)',
-        background: 'rgba(5, 11, 16, 0.8)',
+        background: 'rgba(8, 10, 14, 0.75)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)'
       }}>
@@ -172,26 +245,27 @@ export function AppContent() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          paddingTop: '16px',
-          paddingBottom: '16px',
+          paddingTop: '14px',
+          paddingBottom: '14px',
           flexWrap: 'wrap',
-          gap: '16px'
+          gap: '12px'
         }}>
-          {/* Logo / Title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Logo / Museum Identity */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{
               display: 'inline-flex',
-              padding: '8px',
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, var(--accent-primary) 0%, #A855F7 100%)',
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--accent-primary)',
               color: '#050B10',
-              boxShadow: '0 0 20px var(--bg-glow)'
+              fontWeight: 900,
+              fontSize: '1rem'
             }}>
-              <Dna size={22} />
+              ✦
             </span>
             <div>
               <h1 style={{
-                fontSize: '1.25rem',
+                fontSize: '1.15rem',
                 fontWeight: 900,
                 letterSpacing: '-0.02em',
                 margin: 0,
@@ -199,26 +273,117 @@ export function AppContent() {
               }}>
                 <span className="gradient-text">Interesting Cool Creatures</span>
               </h1>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Earth's Extraordinary Extant & Extinct Biodiversity
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                a tiny, curious museum of weird life
               </span>
             </div>
           </div>
 
-          {/* Quick Metrics & Controls */}
+          {/* Clean Museum Action Bar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {/* Brutalist Color Theme Switcher */}
+            {/* Surprise Me Signature Button */}
+            <button
+              onClick={handleSurpriseMe}
+              className="btn btn-primary"
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-button)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: 700
+              }}
+              title="Pick a random fascinating creature (Shortcut: Space)"
+            >
+              <span>✨ Surprise me</span>
+              <kbd style={{
+                background: 'rgba(0,0,0,0.2)',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                fontSize: '0.65rem',
+                marginLeft: '2px'
+              }}>
+                Space
+              </kbd>
+            </button>
+
+            {/* Quick Search Jump Trigger */}
+            <button
+              onClick={() => {
+                const search = document.getElementById('input-species-search');
+                if (search) {
+                  search.focus();
+                  search.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+              }}
+              className="btn btn-secondary"
+              style={{
+                fontSize: '0.8rem',
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-button)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Search species (Shortcut: /)"
+            >
+              <span>Search</span>
+              <kbd style={{
+                background: 'rgba(255,255,255,0.08)',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                fontSize: '0.65rem'
+              }}>
+                /
+              </kbd>
+            </button>
+
+            {/* Quiet Live Data Indicator (§ 40) */}
+            <button
+              onClick={handleTogglePureLiveMode}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: isPureLiveMode ? 'rgba(0, 255, 102, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid var(--border-subtle)',
+                padding: '5px 10px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.74rem',
+                color: isPureLiveMode ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                cursor: 'pointer'
+              }}
+              title={isPureLiveMode ? 'Streaming live from iNaturalist & GBIF' : 'Click to stream live from GBIF & iNaturalist'}
+            >
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--accent-primary)',
+                  display: 'inline-block'
+                }}
+                className={streamingProgress.isStreaming ? 'animate-ping' : ''}
+              />
+              <span>{isPureLiveMode ? 'Live Feed' : '● Live'}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
+                ({catalog.length})
+              </span>
+            </button>
+
+            {/* Soft Palette Switcher (Minimal) */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '3px',
                 background: 'rgba(255, 255, 255, 0.04)',
-                border: '1.5px solid var(--brutalist-border)',
-                borderRadius: '6px',
-                padding: '3px 5px'
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-full)',
+                padding: '2px 4px'
               }}
-              title="Brutalist Theme Palette Switcher"
+              title="Change theme color"
             >
               {Object.values(BRUTALIST_THEMES).map((t) => (
                 <button
@@ -227,152 +392,28 @@ export function AppContent() {
                     setActiveTheme(t.id);
                     themeEngine.applyBrutalistTheme(t.id);
                   }}
-                  className={`btn-subtle-brutalist ${activeTheme === t.id ? 'active' : ''}`}
                   style={{
-                    padding: '3px 8px',
-                    fontSize: '0.68rem',
-                    borderRadius: '4px',
+                    background: activeTheme === t.id ? t.primary : 'transparent',
+                    border: 'none',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    fontSize: '0.6rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px'
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease',
+                    boxShadow: activeTheme === t.id ? `0 0 8px ${t.primary}` : 'none'
                   }}
-                  title={`Switch to ${t.name}`}
-                >
-                  <span style={{ fontSize: '0.75rem' }}>{t.icon}</span>
-                  <span>{t.name.split(' ')[0]}</span>
-                </button>
+                  title={t.name}
+                />
               ))}
-            </div>
-
-            {/* 100 Species Streaming Telemetry Badge */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: streamingProgress.isStreaming
-                  ? 'rgba(0, 255, 102, 0.08)'
-                  : catalog.length >= 100
-                  ? 'rgba(0, 255, 102, 0.12)'
-                  : 'rgba(255, 255, 255, 0.04)',
-                border: streamingProgress.isStreaming
-                  ? '1.5px solid var(--accent-primary)'
-                  : '1px solid var(--border-subtle)',
-                padding: '5px 12px',
-                borderRadius: 'var(--radius-full)',
-                fontSize: '0.78rem',
-                color: 'var(--text-secondary)',
-                transition: 'all 0.3s ease'
-              }}
-              title="Global Biodiversity Stream Status"
-            >
-              <Globe2
-                size={14}
-                className={streamingProgress.isStreaming ? 'animate-spin-slow' : ''}
-                style={{ color: 'var(--accent-primary)' }}
-              />
-              <span>
-                <strong style={{ color: 'var(--accent-primary)', fontSize: '0.84rem' }}>{catalog.length}</strong>
-                <span style={{ color: 'var(--text-muted)', margin: '0 2px' }}>/</span>
-                <span>100 Species</span>
-                {streamingProgress.isStreaming ? (
-                  <span
-                    style={{
-                      marginLeft: '6px',
-                      color: 'var(--accent-primary)',
-                      fontWeight: 700,
-                      letterSpacing: '0.02em'
-                    }}
-                    className="animate-pulse"
-                  >
-                    (Streaming Live...)
-                  </span>
-                ) : catalog.length >= 100 ? (
-                  <span
-                    style={{
-                      marginLeft: '6px',
-                      color: 'var(--accent-primary)',
-                      fontWeight: 700
-                    }}
-                  >
-                    (✓ Complete)
-                  </span>
-                ) : null}
-              </span>
-            </div>
-
-            {/* Quick Action Button to Trigger or Re-stream */}
-            <button
-              onClick={() => startStreamingTo100()}
-              disabled={streamingProgress.isStreaming}
-              className="btn btn-secondary"
-              style={{
-                fontSize: '0.78rem',
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                border: streamingProgress.isStreaming
-                  ? '1px solid var(--accent-primary)'
-                  : '1px solid var(--border-subtle)',
-                background: streamingProgress.isStreaming
-                  ? 'rgba(0, 255, 102, 0.08)'
-                  : 'rgba(255, 255, 255, 0.04)'
-              }}
-              title="Stream until at least 100 research-grade species are ingested"
-            >
-              <Radio
-                size={14}
-                className={streamingProgress.isStreaming ? 'animate-pulse' : ''}
-                style={{ color: 'var(--accent-primary)' }}
-              />
-              <span>
-                {streamingProgress.isStreaming
-                  ? `Ingesting (${catalog.length}/100)...`
-                  : catalog.length >= 100
-                  ? 'Sync 100 Species'
-                  : 'Fetch to 100'}
-              </span>
-            </button>
-
-            <button
-              onClick={handleTogglePureLiveMode}
-              disabled={streamingProgress.isStreaming}
-              className="btn btn-secondary"
-              style={{
-                fontSize: '0.78rem',
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                border: isPureLiveMode ? '1px solid var(--accent-primary)' : '1px solid var(--border-subtle)',
-                background: isPureLiveMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.04)'
-              }}
-              title="Toggle between scientific archive and 100% dynamically fetched live organisms"
-            >
-              <Radio size={14} style={{ color: isPureLiveMode ? 'var(--accent-primary)' : 'var(--text-muted)' }} />
-              <span>{isPureLiveMode ? 'Live Feed (Active)' : 'Pure Live Feed'}</span>
-            </button>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid var(--border-subtle)',
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-full)',
-              fontSize: '0.78rem',
-              color: 'var(--text-secondary)'
-            }}>
-              <Cpu size={14} style={{ color: 'var(--accent-primary)' }} />
-              <span>{aiStatus === 'readily' ? 'Gemini Nano' : 'Procedural AI'}</span>
             </div>
           </div>
         </div>
       </header>
+
 
       {/* Main Page Sections */}
       <main>
@@ -380,7 +421,9 @@ export function AppContent() {
         <SpotlightHero
           creature={spotlightCreature}
           onSelectCreature={(c: Creature) => setSelectedCreature(c)}
+          onSurpriseMe={handleSurpriseMe}
         />
+
 
         {/* Evolutionary Timeline & Filterable Catalog */}
         <ExtinctionTimeline

@@ -30,19 +30,28 @@
   --font-display: 'Outfit', sans-serif;
   --font-mono: 'Space Grotesk', monospace;
 
-  /* Radius & Shadows */
+  /* Radius & Shadows (Soft Brutalism Spec § 47) */
   --radius-sm: 8px;
   --radius-md: 14px;
-  --radius-lg: 20px;
+  --radius-card: 18px;
+  --radius-lg: 22px;
   --radius-full: 9999px;
+  --radius-button: 9999px;
   --shadow-glow: 0 0 30px -5px var(--bg-glow);
   --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.22);
   
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 700ms cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+button:active {
+  transform: scale(0.98);
+}
+
 
 *, *::before, *::after {
   box-sizing: border-box;

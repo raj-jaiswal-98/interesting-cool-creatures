@@ -62,10 +62,10 @@ export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
       <div>
         <h4 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
           <Dna size={20} style={{ color: 'var(--accent-primary)' }} />
-          <span>Speculative Evolutionary Laboratory (Chrome AI)</span>
+          <span>Imagine: What if its world changed?</span>
         </h4>
         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-          Select an environmental stressor and utilize Chrome's on-device AI model to extrapolate this creature's physiological mutations 10,000+ years into the future.
+          Choose a future scenario and let AI imagine how this creature might evolve 10,000 years from now.
         </p>
       </div>
 
@@ -118,18 +118,18 @@ export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
           onClick={handleSimulate}
           disabled={isSimulating}
           className="btn btn-primary"
-          style={{ padding: '12px 28px', fontSize: '1rem' }}
+          style={{ padding: '12px 28px', fontSize: '1rem', borderRadius: 'var(--radius-button)' }}
           id="btn-run-simulation"
         >
           {isSimulating ? (
             <>
               <Loader2 size={18} className="animate-spin-slow" />
-              <span>Synthesizing Evolutionary Trajectory...</span>
+              <span>Imagining future form...</span>
             </>
           ) : (
             <>
               <Sparkles size={18} />
-              <span>Simulate 10,000-Year Adaptation</span>
+              <span>Imagine it ✨</span>
             </>
           )}
         </button>
