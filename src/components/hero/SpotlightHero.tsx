@@ -188,7 +188,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
               }}>
                 {creature.scientificName}
               </p>
-              <h1 style={{
+              <h2 style={{
                 fontSize: 'clamp(2rem, 3.6vw, 2.8rem)',
                 fontWeight: 800,
                 lineHeight: 1.1,
@@ -196,7 +196,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
                 letterSpacing: '-0.02em'
               }}>
                 {creature.commonName}
-              </h1>
+              </h2>
 
               {/* The "Tiny Fact" Highlight Pattern (§ 10) */}
               <div style={{

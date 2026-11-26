@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://raj-jaiswal-98.github.io/interesting-cool-creatures/sitemap.xml
