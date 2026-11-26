@@ -175,7 +175,7 @@ export function ExtinctionTimeline({
 
 
   return (
-    <section style={{ position: 'relative', zIndex: 1, padding: '40px 0 80px' }} id="timeline-catalog">
+    <section className="paper-section" style={{ position: 'relative', zIndex: 1, padding: '56px 0 80px' }} id="timeline-catalog">
       <div className="container">
         {/* Header Title */}
         <div style={{ marginBottom: '32px' }}>
@@ -489,10 +489,10 @@ export function ExtinctionTimeline({
                 }}
                 id="select-sort-order"
               >
-                <option value="chronology-asc" style={{ background: '#0B1622', color: '#FFF' }}>Chronology (Oldest First)</option>
-                <option value="chronology-desc" style={{ background: '#0B1622', color: '#FFF' }}>Chronology (Newest First)</option>
-                <option value="danger" style={{ background: '#0B1622', color: '#FFF' }}>Threat Level (High to Low)</option>
-                <option value="name" style={{ background: '#0B1622', color: '#FFF' }}>Name (A to Z)</option>
+                <option value="chronology-asc" style={{ background: '#201E1F', color: '#F4EFE8' }}>Chronology (Oldest First)</option>
+                <option value="chronology-desc" style={{ background: '#201E1F', color: '#F4EFE8' }}>Chronology (Newest First)</option>
+                <option value="danger" style={{ background: '#201E1F', color: '#F4EFE8' }}>Threat Level (High to Low)</option>
+                <option value="name" style={{ background: '#201E1F', color: '#F4EFE8' }}>Name (A to Z)</option>
               </select>
             </div>
           </div>

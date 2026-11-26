@@ -70,7 +70,7 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px',
-        backgroundColor: 'rgba(3, 8, 13, 0.82)',
+        backgroundColor: 'rgba(20, 18, 19, 0.82)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         animation: 'fadeIn 0.25s ease'
@@ -92,7 +92,7 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          backgroundColor: '#0D0E12',
+          backgroundColor: 'var(--surface-modal)',
           border: '2px solid var(--brutalist-border)',
           borderRadius: 'var(--radius-card)',
           boxShadow: '10px 10px 0px rgba(0, 0, 0, 0.95)',
@@ -148,8 +148,8 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
                   {creature.commonName}
                 </h2>
                 <span style={{
-                  fontSize: '0.85rem',
-                  fontFamily: 'var(--font-mono)',
+                  fontSize: '1.15rem',
+                  fontFamily: 'var(--font-serif)',
                   color: 'var(--accent-primary)',
                   fontStyle: 'italic'
                 }}>

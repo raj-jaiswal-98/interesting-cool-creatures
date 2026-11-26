@@ -373,10 +373,10 @@ export function OverviewTab({ creature }: OverviewTabProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
             <span
               style={{
-                fontSize: '0.95rem',
+                fontSize: '1.2rem',
                 fontStyle: 'italic',
                 color: 'var(--accent-primary)',
-                fontFamily: 'var(--font-mono)'
+                fontFamily: 'var(--font-serif)'
               }}
             >
               {creature.scientificName}

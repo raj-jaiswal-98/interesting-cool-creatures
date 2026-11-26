@@ -19,6 +19,9 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
   const [imgHovered, setImgHovered] = useState(false);
 
   const isDynamic = !CREATURE_CATALOG.some((c) => c.id === creature.id);
+  // Desync the breathe loop between cards so the grid doesn't pulse in unison.
+  const breatheOffset = (id: string) =>
+    (Array.from(id).reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 70) / 10;
   const eraClass = `badge-${creature.era.toLowerCase()}`;
   const personalityTags = getCreaturePersonalityTags(creature);
   const tinyFact = getCreatureTinyFact(creature);
@@ -77,7 +80,9 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
             alt={creature.commonName}
             referrerPolicy="no-referrer"
             loading="lazy"
+            className="anim-breathe"
             style={{
+              animationDelay: `-${breatheOffset(creature.id)}s`,
               width: '100%',
               height: '100%',
               objectFit: 'cover',
@@ -147,8 +152,8 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
 
         <p
           style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.74rem',
+            fontFamily: 'var(--font-serif)',
+            fontSize: '1rem',
             color: 'var(--text-muted)',
             margin: '0 0 8px 0',
             fontStyle: 'italic'
