@@ -2,8 +2,6 @@
 
 > A tiny, curious museum of weird life: an interactive, browser-native exploration of Earth's most extraordinary living, endangered, and extinct organisms across 250 million years of evolutionary history.
 
-**Live site:** <https://raj-jaiswal-98.github.io/interesting-cool-creatures/>
-
 ![Architecture](https://img.shields.io/badge/Architecture-React_18_%2B_Vite_%2B_TypeScript-201E1F?style=flat-square)
 ![On-Device AI](https://img.shields.io/badge/AI-Chrome_Prompt_API_%2B_Transformers.js-FC4109?style=flat-square)
 ![Biodiversity APIs](https://img.shields.io/badge/Data-GBIF_%7C_iNaturalist_%7C_PBDB_%7C_Wikidata-5D9DC5?style=flat-square)
