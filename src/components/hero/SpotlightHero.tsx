@@ -126,7 +126,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
                 transition: 'transform 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
                 ...({ viewTransitionName: 'creature-spotlight' } as React.CSSProperties)
               }}
-              className="hero-creature-img"
+              className="hero-creature-img anim-breathe"
             />
             {/* Ambient vignette */}
             <div style={{
@@ -179,8 +179,8 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
           }}>
             <div>
               <p style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.82rem',
+                fontFamily: 'var(--font-serif)',
+                fontSize: '1.15rem',
                 color: 'var(--text-muted)',
                 letterSpacing: '0.04em',
                 marginBottom: '4px',

@@ -28,7 +28,7 @@ export function AppContent() {
   const [spotlightCreature, setSpotlightCreature] = useState<Creature | null>(null);
   const [selectedCreature, setSelectedCreature] = useState<Creature | null>(null);
   const [modalInitialTab, setModalInitialTab] = useState<'overview' | 'map' | 'evolution' | 'clash'>('overview');
-  const [activeTheme, setActiveTheme] = useState<string>('acid');
+  const [activeTheme, setActiveTheme] = useState<string>('ember');
   const [aiStatus, setAiStatus] = useState<AIAvailabilityStatus | 'checking'>('checking');
   
   // Dynamic catalog goal randomized between 200 and 250 species
@@ -95,7 +95,7 @@ export function AppContent() {
 
   useEffect(() => {
     // Initialize default non-blue Neo-Brutalist theme
-    themeEngine.applyBrutalistTheme('acid');
+    themeEngine.applyBrutalistTheme('ember');
 
     const daily = getDailySpotlightCreature(CREATURE_CATALOG);
     setSpotlightCreature(daily);
@@ -258,7 +258,7 @@ export function AppContent() {
         position: 'relative',
         zIndex: 10,
         borderBottom: '1px solid var(--border-subtle)',
-        background: 'rgba(8, 10, 14, 0.75)',
+        background: 'rgba(32, 30, 31, 0.82)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)'
       }}>
@@ -278,10 +278,10 @@ export function AppContent() {
               padding: '6px',
               borderRadius: 'var(--radius-sm)',
               background: 'var(--accent-primary)',
-              color: '#050B10',
+              color: 'var(--ink)',
               fontWeight: 900,
               fontSize: '1rem'
-            }}>
+            }} className="anim-fidget">
               ✦
             </span>
             <div>
@@ -295,7 +295,7 @@ export function AppContent() {
                 <span className="gradient-text">Interesting Cool Creatures</span>
               </h1>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                a tiny, curious museum of weird life
+                <span style={{ fontFamily: 'var(--font-mono)' }}>a tiny, curious museum of weird life</span><span className="caret" aria-hidden="true">_</span>
               </span>
             </div>
           </div>
@@ -367,7 +367,7 @@ export function AppContent() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: isPureLiveMode ? 'rgba(0, 255, 102, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                background: isPureLiveMode ? 'var(--bg-glow)' : 'rgba(255, 255, 255, 0.04)',
                 border: '1px solid var(--border-subtle)',
                 padding: '5px 10px',
                 borderRadius: 'var(--radius-full)',
@@ -480,7 +480,7 @@ export function AppContent() {
         position: 'relative',
         zIndex: 1,
         borderTop: '1px solid var(--border-subtle)',
-        background: 'rgba(5, 11, 16, 0.95)',
+        background: 'var(--ink-deep)',
         padding: '40px 0',
         marginTop: '60px'
       }}>

@@ -13,45 +13,45 @@ export interface BrutalistThemeOption {
 }
 
 export const BRUTALIST_THEMES: Record<string, BrutalistThemeOption> = {
-  acid: {
-    id: 'acid',
-    name: 'Acid Lime',
+  ember: {
+    id: 'ember',
+    name: 'Ember',
+    icon: '🟠',
+    primary: '#FC4109',
+    darkMuted: '#2A1610',
+    glow: 'rgba(252, 65, 9, 0.16)',
+    textAccent: '#FF7A4D',
+    surface: '#2A2728'
+  },
+  mint: {
+    id: 'mint',
+    name: 'Mint',
     icon: '🟢',
-    primary: '#00FF66',
-    darkMuted: '#0A150D',
-    glow: 'rgba(0, 255, 102, 0.18)',
-    textAccent: '#66FFA3',
-    surface: '#121316'
+    primary: '#69B488',
+    darkMuted: '#16241B',
+    glow: 'rgba(105, 180, 136, 0.16)',
+    textAccent: '#93CFA9',
+    surface: '#2A2728'
   },
-  amber: {
-    id: 'amber',
-    name: 'Solar Amber',
+  lilac: {
+    id: 'lilac',
+    name: 'Lilac',
+    icon: '🟣',
+    primary: '#CB9CF8',
+    darkMuted: '#231B2B',
+    glow: 'rgba(203, 156, 248, 0.16)',
+    textAccent: '#DEBFFB',
+    surface: '#2A2728'
+  },
+  mustard: {
+    id: 'mustard',
+    name: 'Mustard',
     icon: '🟡',
-    primary: '#FFB800',
-    darkMuted: '#1A1406',
-    glow: 'rgba(255, 184, 0, 0.18)',
-    textAccent: '#FFD15C',
-    surface: '#121316'
-  },
-  crimson: {
-    id: 'crimson',
-    name: 'Infrared Red',
-    icon: '🔴',
-    primary: '#FF2E63',
-    darkMuted: '#1A070D',
-    glow: 'rgba(255, 46, 99, 0.18)',
-    textAccent: '#FF6B8B',
-    surface: '#121316'
-  },
-  mono: {
-    id: 'mono',
-    name: 'Stark Mono',
-    icon: '⚪',
-    primary: '#F8FAFC',
-    darkMuted: '#141416',
-    glow: 'rgba(248, 250, 252, 0.14)',
-    textAccent: '#E2E8F0',
-    surface: '#121316'
+    primary: '#F8D867',
+    darkMuted: '#2A2412',
+    glow: 'rgba(248, 216, 103, 0.14)',
+    textAccent: '#FBE597',
+    surface: '#2A2728'
   }
 };
 
@@ -65,13 +65,13 @@ class ThemeEngine {
   activeThemeId: string;
 
   constructor() {
-    this.activeThemeId = 'acid';
+    this.activeThemeId = 'ember';
     this.defaultPalette = {
-      primary: BRUTALIST_THEMES.acid.primary,
-      darkMuted: BRUTALIST_THEMES.acid.darkMuted,
-      glow: BRUTALIST_THEMES.acid.glow,
-      textAccent: BRUTALIST_THEMES.acid.textAccent,
-      surface: BRUTALIST_THEMES.acid.surface
+      primary: BRUTALIST_THEMES.ember.primary,
+      darkMuted: BRUTALIST_THEMES.ember.darkMuted,
+      glow: BRUTALIST_THEMES.ember.glow,
+      textAccent: BRUTALIST_THEMES.ember.textAccent,
+      surface: BRUTALIST_THEMES.ember.surface
     };
     this.currentPalette = { ...this.defaultPalette };
   }
@@ -112,7 +112,7 @@ class ThemeEngine {
    * Switches the active neo-brutalist theme across the application.
    */
   applyBrutalistTheme(themeId: string): ThemePalette {
-    const theme = BRUTALIST_THEMES[themeId] || BRUTALIST_THEMES.acid;
+    const theme = BRUTALIST_THEMES[themeId] || BRUTALIST_THEMES.ember;
     this.activeThemeId = theme.id;
     const palette: ThemePalette = {
       primary: theme.primary,
@@ -135,7 +135,7 @@ class ThemeEngine {
    */
   async applyCreatureTheme(imageUrl?: string | null, fallbackPalette?: ThemePalette): Promise<ThemePalette> {
     // If a non-blue brutalist theme is already chosen, maintain the chosen brutalist accent
-    const savedTheme = BRUTALIST_THEMES[this.activeThemeId] || BRUTALIST_THEMES.acid;
+    const savedTheme = BRUTALIST_THEMES[this.activeThemeId] || BRUTALIST_THEMES.ember;
 
     if (fallbackPalette) {
       // Check if fallbackPalette is blue/cyan (e.g. #00D2FF or #00F0FF)
@@ -183,7 +183,7 @@ class ThemeEngine {
       const isHeavilyBlue = b > 140 && b > r * 1.2 && b > g * 1.1;
 
       const primaryHex = isHeavilyBlue ? savedTheme.primary : this.rgbToHex(r, g, b);
-      const darkTriplet = palette && palette[1] ? palette[1] : [16, 17, 20];
+      const darkTriplet = palette && palette[1] ? palette[1] : [32, 30, 31];
       const darkHex = this.rgbToHex(
         Math.min(darkTriplet[0], 25),
         Math.min(darkTriplet[1], 25),
@@ -192,7 +192,7 @@ class ThemeEngine {
 
       const textAccentHex = isHeavilyBlue ? savedTheme.textAccent : this.adjustBrightness(primaryHex, 0.35);
       const glowRgba = isHeavilyBlue ? savedTheme.glow : `rgba(${r}, ${g}, ${b}, 0.22)`;
-      const surfaceRgba = '#121316';
+      const surfaceRgba = '#2A2728';
 
       const newTheme: ThemePalette = {
         primary: primaryHex,
