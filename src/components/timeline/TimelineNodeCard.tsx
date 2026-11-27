@@ -4,9 +4,9 @@ import {
   MapPin,
   Swords
 } from 'lucide-react';
-import { CREATURE_CATALOG } from '../../data/creatureCatalog';
 import { getCreaturePersonalityTags, getCreatureTinyFact } from '../../utils/personality';
 import { formatCreatureLength, formatCreatureWeight } from '../../utils/formatters';
+import { getThreatProfile } from '../../utils/threatAssessment';
 import type { Creature } from '../../types/creature';
 
 interface TimelineNodeCardProps {
@@ -18,13 +18,13 @@ interface TimelineNodeCardProps {
 export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) {
   const [imgHovered, setImgHovered] = useState(false);
 
-  const isDynamic = !CREATURE_CATALOG.some((c) => c.id === creature.id);
   // Desync the breathe loop between cards so the grid doesn't pulse in unison.
   const breatheOffset = (id: string) =>
     (Array.from(id).reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 70) / 10;
   const eraClass = `badge-${creature.era.toLowerCase()}`;
   const personalityTags = getCreaturePersonalityTags(creature);
   const tinyFact = getCreatureTinyFact(creature);
+  const threat = getThreatProfile(creature);
 
   const handleCardClick = (tab: 'overview' | 'map' | 'evolution' | 'clash' = 'overview') => {
     onSelect(creature, tab);
@@ -95,40 +95,6 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
             }}
           />
 
-          {isDynamic && (
-            <span
-              style={{
-                position: 'absolute',
-                top: '8px',
-                right: '8px',
-                background: 'color-mix(in srgb, var(--accent-primary) 25%, transparent)',
-                border: '1px solid var(--accent-primary)',
-                color: 'var(--accent-primary)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.62rem',
-                fontWeight: 700,
-                padding: '2px 6px',
-                borderRadius: 'var(--radius-full)',
-                backdropFilter: 'blur(4px)'
-              }}
-            >
-              ● LIVE
-            </span>
-          )}
-
-          <span
-            className={`badge ${eraClass}`}
-            style={{
-              position: 'absolute',
-              bottom: '8px',
-              left: '8px',
-              fontSize: '0.65rem',
-              backdropFilter: 'blur(4px)',
-              padding: '2px 8px'
-            }}
-          >
-            {creature.era}
-          </span>
         </div>
       </div>
 
@@ -164,6 +130,9 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
 
         {/* Personality Tags (§ 9) */}
         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+          <span className={`badge ${eraClass}`} style={{ fontSize: '0.62rem', padding: '1px 7px' }}>
+            {creature.era}
+          </span>
           {personalityTags.map((tag, idx) => (
             <span
               key={idx}
@@ -231,8 +200,8 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--text-muted)' }}>
             THREAT
           </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.76rem', fontWeight: 700, color: 'var(--danger)' }}>
-            {creature.stats?.dangerLevel || 5}/10
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.76rem', fontWeight: 700, color: threat.color }} title={`${threat.label}: ${threat.reason}`}>
+            {threat.level}/10
           </span>
         </div>
       </div>

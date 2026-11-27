@@ -132,7 +132,7 @@ export function AppContent() {
     setSurpriseToast('Finding you a weird one...');
     setTimeout(() => {
       setSpotlightCreature(chosen);
-      themeEngine.applyCreatureTheme(chosen.photoUrl, chosen.themePalette);
+      themeEngine.applyCreatureTheme(chosen.photoUrl, chosen.themePalette, { preferPhoto: chosen.extinctionYear === null });
       setSurpriseToast(null);
 
       const hero = document.getElementById('spotlight-hero');
@@ -177,7 +177,7 @@ export function AppContent() {
         if (pureLive.length > 0) {
           setCatalog(pureLive);
           setSpotlightCreature(pureLive[0]);
-          themeEngine.applyCreatureTheme(pureLive[0].photoUrl, pureLive[0].themePalette);
+          themeEngine.applyCreatureTheme(pureLive[0].photoUrl, pureLive[0].themePalette, { preferPhoto: pureLive[0].extinctionYear === null });
           setIsPureLiveMode(true);
         }
       } catch (err) {
@@ -189,7 +189,7 @@ export function AppContent() {
       setCatalog(CREATURE_CATALOG);
       const daily = getDailySpotlightCreature(CREATURE_CATALOG);
       setSpotlightCreature(daily);
-      if (daily) themeEngine.applyCreatureTheme(daily.photoUrl, daily.themePalette);
+      if (daily) themeEngine.applyCreatureTheme(daily.photoUrl, daily.themePalette, { preferPhoto: daily.extinctionYear === null });
       setIsPureLiveMode(false);
       startStreamingToTarget();
     }
@@ -469,7 +469,7 @@ export function AppContent() {
             setSelectedCreature(null);
             // Re-apply daily spotlight theme when closing
             if (spotlightCreature) {
-              themeEngine.applyCreatureTheme(spotlightCreature.photoUrl, spotlightCreature.themePalette);
+              themeEngine.applyCreatureTheme(spotlightCreature.photoUrl, spotlightCreature.themePalette, { preferPhoto: spotlightCreature.extinctionYear === null });
             }
           }}
         />

@@ -5,6 +5,7 @@ import { AddMoreCard } from './AddMoreCard';
 import { creatureResolver } from '../../services/resolver/creatureResolver';
 import { useCreatureSearch } from '../../hooks/useCreatureSearch';
 import { useSemanticRerank, useEmbeddingStatus } from '../../hooks/useSemanticRerank';
+import { getThreatProfile } from '../../utils/threatAssessment';
 import type { Creature } from '../../types/creature';
 
 type SortOption = 'chronology-asc' | 'chronology-desc' | 'danger' | 'name';
@@ -164,7 +165,7 @@ export function ExtinctionTimeline({
           return yearB - yearA;
         }
         if (sortBy === 'danger') {
-          return (b.stats?.dangerLevel || 0) - (a.stats?.dangerLevel || 0);
+          return getThreatProfile(b).level - getThreatProfile(a).level;
         }
         if (sortBy === 'name') {
           return a.commonName.localeCompare(b.commonName);

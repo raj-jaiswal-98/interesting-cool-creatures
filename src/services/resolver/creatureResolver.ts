@@ -13,6 +13,7 @@ import { inaturalistAdapter } from './adapters/inaturalistAdapter';
 import { pbdbAdapter } from './adapters/pbdbAdapter';
 import { wikidataAdapter } from './adapters/wikidataAdapter';
 import { creatureCache, CACHE_TTLS } from '../cache/indexedDBCache';
+import { assessThreat } from '../../utils/threatAssessment';
 
 export function normalizeCatalogCreature(creature: Creature): NormalizedCreature {
   const isExtinct = creature.extinctionYear !== null;
@@ -275,7 +276,7 @@ export class CreatureResolver {
     targetCount = 225,
     onBatchProgress?: (batch: Creature[], totalSoFar: number) => void
   ): Promise<Creature[]> {
-    const cacheKey = `resolver:catalog_target_${targetCount}`;
+    const cacheKey = `resolver:catalog_target_v2_${targetCount}`;
     const cached = await creatureCache.get<Creature[]>(cacheKey);
     if (cached && cached.length >= targetCount) {
       if (onBatchProgress) {
@@ -498,7 +499,7 @@ export class CreatureResolver {
     const cleanQuery = query.trim();
     if (!cleanQuery) return [];
 
-    const cacheKey = `resolver:search_live:${cleanQuery.toLowerCase()}:${limit}`;
+    const cacheKey = `resolver:search_live_v2:${cleanQuery.toLowerCase()}:${limit}`;
     const cached = await creatureCache.get<Creature[]>(cacheKey);
     if (cached && cached.length > 0) return cached;
 
@@ -641,6 +642,24 @@ export function inaturalistObservationToCreature(item: any): Creature | null {
     weightKg = 1.5;
   }
 
+  // Replace class-level placeholders with a taxon-aware threat and typical size.
+  const genusName = scientificName.split(' ')[0] || scientificName;
+  const threat = assessThreat({
+    commonName,
+    scientificName,
+    taxonomy: { class: item.taxon.iconic_taxon_name, genus: genusName },
+    lengthMeters,
+    weightKg,
+    diet
+  });
+  dangerLevel = threat.level;
+  if (threat.size) {
+    [lengthMeters, weightKg] = threat.size;
+  }
+  if (threat.kind === 'apex' || threat.kind === 'predator') {
+    diet = 'Carnivore';
+  }
+
   const rarityScore = Math.min(98, Math.max(60, 95 - Math.floor((item.identifications_count || 1) / 3)));
 
   const coordinates: CreatureCoordinate[] = [];
@@ -673,7 +692,7 @@ export function inaturalistObservationToCreature(item: any): Creature | null {
     habitat: placeGuess,
     habitatType,
     photoUrl: photo,
-    description: `Research-grade sighting of ${commonName} (${scientificName}) documented in ${placeGuess}. Verified through global biodiversity observer networks.`,
+    description: `${commonName} (${scientificName}), photographed in the wild near ${placeGuess}.`,
     diet,
     stats: {
       lengthMeters,
@@ -771,12 +790,23 @@ export function normalizedToCreature(nc: NormalizedCreature): Creature {
       nc.sources.find((s) => s.details)?.details?.replace(/^Description:\s*/, '') ||
       `${nc.identity?.commonName || 'This organism'} (${nc.identity?.scientificName}) is an extraordinary species documented in open scientific biodiversity telemetry.`,
     diet: nc.biology?.diet || (isExtinct ? 'Carnivore' : 'Omnivore'),
-    stats: {
-      lengthMeters: nc.biology?.size ?? (isExtinct ? 3.5 : 1.2),
-      weightKg: nc.biology?.mass ?? (isExtinct ? 450 : 35),
-      dangerLevel: nc.biology?.dangerLevel ?? (isExtinct ? 8 : 4),
-      rarityScore: nc.biology?.rarityScore ?? 85
-    },
+    stats: (() => {
+      const assessed = assessThreat({
+        commonName: nc.identity?.commonName || nc.identity?.scientificName,
+        scientificName: nc.identity?.scientificName || '',
+        taxonomy: nc.taxonomy,
+        lengthMeters: nc.biology?.size ?? undefined,
+        weightKg: nc.biology?.mass ?? undefined,
+        diet: nc.biology?.diet ?? undefined,
+        extinct: isExtinct
+      });
+      return {
+        lengthMeters: nc.biology?.size ?? assessed.size?.[0] ?? (isExtinct ? 3.5 : 1.2),
+        weightKg: nc.biology?.mass ?? assessed.size?.[1] ?? (isExtinct ? 450 : 35),
+        dangerLevel: nc.biology?.dangerLevel ?? (assessed.matched ? assessed.level : isExtinct ? 7 : assessed.level),
+        rarityScore: nc.biology?.rarityScore ?? 85
+      };
+    })(),
     taxonomy: {
       kingdom: nc.taxonomy?.kingdom || 'Animalia',
       phylum: nc.taxonomy?.phylum || 'Chordata',
