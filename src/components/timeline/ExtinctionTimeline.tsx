@@ -175,7 +175,7 @@ export function ExtinctionTimeline({
 
 
   return (
-    <section className="paper-section" style={{ position: 'relative', zIndex: 1, padding: '56px 0 80px' }} id="timeline-catalog">
+    <section className="topo-section" style={{ position: 'relative', zIndex: 1, padding: '56px 0 80px' }} id="timeline-catalog">
       <div className="container">
         {/* Header Title */}
         <div style={{ marginBottom: '32px' }}>
@@ -210,8 +210,8 @@ export function ExtinctionTimeline({
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   style={{
-                    background: isActive ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.05)',
-                    color: isActive ? '#050B10' : 'var(--text-secondary)',
+                    background: isActive ? 'var(--accent-primary)' : 'var(--tint-2)',
+                    color: isActive ? 'var(--ink)' : 'var(--text-secondary)',
                     border: '1px solid',
                     borderColor: isActive ? 'var(--accent-primary)' : 'var(--border-subtle)',
                     padding: '6px 14px',
@@ -242,7 +242,7 @@ export function ExtinctionTimeline({
             alignItems: 'center',
             justifyContent: 'space-between',
             paddingTop: '10px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+            borderTop: '1px solid var(--tint-2)'
           }}>
             {/* Era Filter Pills */}
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -256,7 +256,7 @@ export function ExtinctionTimeline({
                     key={era.id}
                     onClick={() => setSelectedEra(era.id)}
                     style={{
-                      background: isActive ? 'rgba(255, 255, 255, 0.14)' : 'rgba(255, 255, 255, 0.03)',
+                      background: isActive ? 'var(--tint-3)' : 'var(--tint-1)',
                       color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
                       border: '1px solid',
                       borderColor: isActive ? 'var(--text-secondary)' : 'var(--border-subtle)',
@@ -286,7 +286,7 @@ export function ExtinctionTimeline({
                   position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
-                  background: 'rgba(5, 11, 16, 0.6)',
+                  background: 'var(--well)',
                   border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-full)',
                   padding: '4px 6px 4px 14px',
@@ -342,7 +342,7 @@ export function ExtinctionTimeline({
                       key={idx}
                       style={{
                         fontSize: '0.65rem',
-                        background: 'rgba(0, 255, 102, 0.08)',
+                        background: 'color-mix(in srgb, var(--accent-primary) 8%, transparent)',
                         border: '1px solid var(--accent-primary)',
                         color: 'var(--text-primary)',
                         padding: '1px 6px',
@@ -356,7 +356,7 @@ export function ExtinctionTimeline({
                     <span
                       style={{
                         fontSize: '0.65rem',
-                        background: 'rgba(255, 255, 255, 0.06)',
+                        background: 'var(--tint-2)',
                         color: 'var(--text-secondary)',
                         padding: '1px 6px',
                         borderRadius: '4px'
@@ -369,7 +369,7 @@ export function ExtinctionTimeline({
                     <span
                       style={{
                         fontSize: '0.65rem',
-                        background: 'rgba(255, 255, 255, 0.06)',
+                        background: 'var(--tint-2)',
                         color: 'var(--text-secondary)',
                         padding: '1px 6px',
                         borderRadius: '4px'
@@ -382,8 +382,8 @@ export function ExtinctionTimeline({
                     <span
                       style={{
                         fontSize: '0.65rem',
-                        background: 'rgba(235, 255, 0, 0.1)',
-                        border: '1px solid rgba(235, 255, 0, 0.4)',
+                        background: 'color-mix(in srgb, var(--warn) 10%, transparent)',
+                        border: '1px solid color-mix(in srgb, var(--warn) 40%, transparent)',
                         color: 'var(--text-primary)',
                         padding: '1px 6px',
                         borderRadius: '4px',
@@ -393,7 +393,7 @@ export function ExtinctionTimeline({
                       }}
                       title="Neural vector embeddings re-ranking query results"
                     >
-                      <Zap size={9} style={{ color: '#ebff00' }} /> MiniLM RRF
+                      <Zap size={9} style={{ color: 'var(--warn)' }} /> MiniLM RRF
                     </span>
                   )}
                 </div>
@@ -425,8 +425,8 @@ export function ExtinctionTimeline({
                   ? '1px solid var(--accent-primary)'
                   : '1px solid var(--border-subtle)',
                 background: streamingProgress?.isStreaming
-                  ? 'rgba(0, 255, 102, 0.08)'
-                  : 'rgba(255, 255, 255, 0.04)'
+                  ? 'color-mix(in srgb, var(--accent-primary) 8%, transparent)'
+                  : 'var(--tint-2)'
               }}
               id="btn-discover-live"
               title={`Continuously stream research-grade specimens until ${streamingProgress?.target || 225} organisms are in the catalog`}
@@ -469,7 +469,7 @@ export function ExtinctionTimeline({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(5, 11, 16, 0.6)',
+              background: 'var(--well)',
               border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-full)',
               padding: '6px 14px'
@@ -506,7 +506,7 @@ export function ExtinctionTimeline({
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              background: 'rgba(0, 240, 255, 0.08)',
+              background: 'color-mix(in srgb, var(--info) 8%, transparent)',
               border: '1px solid var(--accent-primary)',
               borderRadius: 'var(--radius-md)',
               padding: '10px 16px',

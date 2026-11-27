@@ -33,8 +33,8 @@
    - **Creature Similarity Engine:** Multi-factor taxonomic, biome, trait, and epoch similarity scoring (0–100%) with comparative rationale.
    - **Client-Side Visual Analyzer:** Canvas 2D image histogram scanner computing luminance, RMS contrast, color temperature, and edge complexity.
 
-5. **Ink & Paper Design System & Particle Ecosystem:**
-   - Warm charcoal *ink* surfaces with cream *notebook-paper* sections (blue ruled lines and a red margin line), animated film grain, and an editorial type trio (see [Design System](#-design-system)).
+5. **Ink Design System & Particle Ecosystem:**
+   - Warm charcoal *ink* surfaces, a topographic survey-map texture behind the catalog and modal, animated film grain, and an editorial type trio (see [Design System](#-design-system)).
    - ColorThief image extraction tints the accent per creature; a palette switcher offers **Ember**, **Mint**, **Lilac**, and **Mustard**.
    - Subtle "alive" motion: breathing creature photos, a fidgeting logo mark, a blinking typewriter caret, and a circle-wipe modal entrance. All of it is disabled under `prefers-reduced-motion`.
    - 60fps Canvas 2D particle simulation tailored to biomes: Marine (bioluminescent bubbles), Volcanic (thermal embers), Forest (spore drift), Tundra (ice crystals), and Aerial (wind shears).
@@ -59,9 +59,11 @@ All tokens live in [`src/index.css`](src/index.css); the per-creature accent is 
 | Token | Value | Use |
 | --- | --- | --- |
 | `--ink` | `#201E1F` | Page background, cards, modal |
-| `--paper` | `#F4EFE8` | Notebook sections (`.paper-section`) |
+| `--paper` | `#F4EFE8` | Warm off-white for primary text |
 | `--accent-primary` | `#FC4109` (default) | Buttons, highlights, caret; replaced per creature |
-| `--paper-rule` / `--paper-margin` | blue / red, translucent | Ruled lines and margin line on paper |
+| `--tint-1..3`, `--well` | translucent off-white / black | Subtle fills, borders and inset wells |
+| `--danger`, `--warn`, `--success`, `--info` | tomato, mustard, mint, blue | Status colors (threat, results, map pins) |
+| `--era-*` | ochre, orange, blue, mint, lilac | Era badges |
 
 **Typography** (Google Fonts):
 
@@ -69,7 +71,7 @@ All tokens live in [`src/index.css`](src/index.css); the per-creature accent is 
 - **Instrument Serif** italic (`--font-serif`): scientific names.
 - **Cutive Mono** (`--font-mono`): labels, stats, and the tagline.
 
-**Surfaces.** Inside `.paper-section`, text tokens flip to ink. Any `.glass-panel` or `.brutalist-card` inside it flips back to light-on-ink text automatically, so components only need the shared `--text-*` / `--border-*` tokens.
+**Surfaces.** Components use only these tokens, never literal colors (canvas drawing is the exception, since canvas can't read CSS variables; the map reads the live accent with `getComputedStyle`). `.topo-section` / `.topo-surface` add the contour texture from [`src/assets/topography.svg`](src/assets/topography.svg), a generated tile that repeats seamlessly. `.ink-surface` marks raised dark panels such as the modal tab strip and specimen column.
 
 **Motion utilities:** `.anim-breathe`, `.anim-fidget`, `.anim-drift`, `.caret`. They use the individual `scale` / `rotate` / `translate` properties so they compose with inline `transform` hover effects. Shared easing: `cubic-bezier(0.16, 1, 0.3, 1)`.
 
@@ -94,7 +96,7 @@ interesting-cool-creatures/
 │   │   │   ├── HabitatCanvas.tsx            # Canvas 2D wrapper
 │   │   │   └── HabitatParticleEngine.ts     # 60fps biome particle simulation
 │   │   ├── timeline/
-│   │   │   ├── ExtinctionTimeline.tsx       # Paper section: filters, search, catalog grid
+│   │   │   ├── ExtinctionTimeline.tsx       # Topo section: filters, search, catalog grid
 │   │   │   ├── TimelineNodeCard.tsx         # Specimen preview card
 │   │   │   └── AddMoreCard.tsx              # Fetches 5–10 more live creatures
 │   │   └── modal/
@@ -128,7 +130,7 @@ interesting-cool-creatures/
 │   │   └── creatureEmbeddings.json          # Precomputed catalog vectors
 │   ├── types/                               # Creature, AI, and normalized provider models
 │   ├── utils/                               # Formatters, personality tags, seed hashing
-│   ├── index.css                            # Ink & paper design system & CSS tokens
+│   ├── index.css                            # Ink design system & CSS tokens
 │   ├── App.tsx                              # Application shell & header
 │   └── main.tsx                             # Entry point
 ├── tests/                                   # Vitest suite (10 files, 55 tests)

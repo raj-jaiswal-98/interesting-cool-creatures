@@ -53,7 +53,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
               height: '24px',
               borderRadius: '50%',
               background: 'var(--accent-primary)',
-              color: '#050B10'
+              color: 'var(--ink)'
             }}>
               <Sparkles size={14} />
             </span>
@@ -73,7 +73,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: 'rgba(255, 255, 255, 0.04)',
+            background: 'var(--tint-2)',
             border: '1px solid var(--border-subtle)',
             padding: '5px 12px',
             borderRadius: 'var(--radius-full)',
@@ -109,7 +109,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'radial-gradient(circle at center, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.6) 100%)'
+            background: 'radial-gradient(circle at center, var(--tint-2) 0%, rgba(0,0,0,0.6) 100%)'
           }}>
             <img
               src={creature.photoUrl}
@@ -152,7 +152,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
                   style={{
                     background: 'rgba(8, 10, 14, 0.75)',
                     backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    border: '1px solid var(--tint-3)',
                     color: '#F8FAFC',
                     padding: '3px 10px',
                     borderRadius: 'var(--radius-full)',
@@ -200,7 +200,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
 
               {/* The "Tiny Fact" Highlight Pattern (§ 10) */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.03)',
+                background: 'var(--tint-1)',
                 borderLeft: '3px solid var(--accent-primary)',
                 padding: '12px 16px',
                 borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
@@ -235,7 +235,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
                 marginBottom: '20px'
               }}>
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: 'var(--tint-1)',
                   border: '1px solid var(--border-subtle)',
                   padding: '8px 12px',
                   borderRadius: 'var(--radius-sm)'
@@ -250,7 +250,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
                 </div>
 
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: 'var(--tint-1)',
                   border: '1px solid var(--border-subtle)',
                   padding: '8px 12px',
                   borderRadius: 'var(--radius-sm)'
@@ -265,16 +265,16 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
                 </div>
 
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: 'var(--tint-1)',
                   border: '1px solid var(--border-subtle)',
                   padding: '8px 12px',
                   borderRadius: 'var(--radius-sm)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '2px' }}>
-                    <ShieldAlert size={12} style={{ color: '#F87171' }} />
+                    <ShieldAlert size={12} style={{ color: 'var(--danger)' }} />
                     <span>THREAT</span>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#F87171' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--danger)' }}>
                     {creature.stats?.dangerLevel || 5} / 10
                   </div>
                 </div>

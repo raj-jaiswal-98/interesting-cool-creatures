@@ -351,7 +351,7 @@ export function AppContent() {
             >
               <span>Search</span>
               <kbd style={{
-                background: 'rgba(255,255,255,0.08)',
+                background: 'var(--tint-2)',
                 padding: '1px 5px',
                 borderRadius: '4px',
                 fontSize: '0.65rem'
@@ -367,7 +367,7 @@ export function AppContent() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: isPureLiveMode ? 'var(--bg-glow)' : 'rgba(255, 255, 255, 0.04)',
+                background: isPureLiveMode ? 'var(--bg-glow)' : 'var(--tint-2)',
                 border: '1px solid var(--border-subtle)',
                 padding: '5px 10px',
                 borderRadius: 'var(--radius-full)',
@@ -399,7 +399,7 @@ export function AppContent() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '3px',
-                background: 'rgba(255, 255, 255, 0.04)',
+                background: 'var(--tint-2)',
                 border: '1px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-full)',
                 padding: '2px 4px'

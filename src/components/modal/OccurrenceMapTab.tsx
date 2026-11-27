@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Globe, Loader2 } from 'lucide-react';
 import { creatureResolver } from '../../services/resolver/creatureResolver';
-import { renderWorldMapCanvas, projectEquirectangular } from './worldMapData';
+import { renderWorldMapCanvas, projectEquirectangular, withAlpha } from './worldMapData';
 import type { Creature, CreatureCoordinate } from '../../types/creature';
 
 interface OccurrenceMapTabProps {
@@ -68,7 +68,10 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
     ctx.clearRect(0, 0, width, height);
 
     // 1. Draw World Continents & Grid
-    renderWorldMapCanvas(ctx, width, height, '#00F0FF');
+    // Canvas can't resolve CSS variables: read the live accent hex set on :root by themeEngine.
+    const accent =
+      getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() || '#FC4109';
+    renderWorldMapCanvas(ctx, width, height, accent);
 
     // 2. Plot occurrence points with radiant glowing halos
     coordinates.forEach((pt, idx) => {
@@ -78,15 +81,15 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
       // Glow halo
       ctx.beginPath();
       ctx.arc(x, y, isHovered ? 13 : 7, 0, Math.PI * 2);
-      ctx.fillStyle = isHovered ? 'rgba(0, 240, 255, 0.45)' : 'rgba(0, 240, 255, 0.22)';
+      ctx.fillStyle = withAlpha(accent, isHovered ? 0.45 : 0.24);
       ctx.fill();
 
       // Pin core
       ctx.beginPath();
       ctx.arc(x, y, isHovered ? 5.5 : 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = isHovered ? '#FFFFFF' : '#00F0FF';
+      ctx.fillStyle = isHovered ? '#F4EFE8' : accent;
       ctx.shadowBlur = isHovered ? 18 : 8;
-      ctx.shadowColor = '#00F0FF';
+      ctx.shadowColor = accent;
       ctx.fill();
       ctx.shadowBlur = 0;
     });
@@ -142,12 +145,12 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
       </div>
 
       {/* Interactive Map Canvas Container */}
-      <div style={{
+      <div className="ink-surface" style={{
         position: 'relative',
         borderRadius: 'var(--radius-md)',
         overflow: 'hidden',
         border: '1px solid var(--border-subtle)',
-        background: '#06111B',
+        background: 'var(--ink-deep)',
         boxShadow: 'var(--shadow-card)'
       }}>
         <canvas
@@ -173,12 +176,12 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
             position: 'absolute',
             bottom: '16px',
             left: '16px',
-            background: 'rgba(5, 11, 16, 0.9)',
+            background: 'rgba(32, 30, 31, 0.9)',
             backdropFilter: 'blur(10px)',
             border: '1px solid var(--accent-primary)',
             borderRadius: 'var(--radius-sm)',
             padding: '10px 14px',
-            color: '#FFFFFF',
+            color: 'var(--text-primary)',
             fontSize: '0.85rem',
             boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
             display: 'flex',
@@ -217,7 +220,7 @@ export function OccurrenceMapTab({ creature }: OccurrenceMapTabProps) {
               key={idx}
               onClick={() => setSelectedPoint(idx)}
               style={{
-                background: selectedPoint === idx ? 'rgba(0, 240, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                background: selectedPoint === idx ? 'color-mix(in srgb, var(--info) 12%, transparent)' : 'var(--tint-1)',
                 border: '1px solid',
                 borderColor: selectedPoint === idx ? 'var(--accent-primary)' : 'var(--border-subtle)',
                 borderRadius: 'var(--radius-sm)',
