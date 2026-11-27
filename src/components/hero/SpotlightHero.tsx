@@ -3,6 +3,7 @@ import { Sparkles, Clock, Compass, ShieldAlert, Ruler, Scale, ArrowRight, Shuffl
 import { getTimeUntilNextSpotlight } from '../../utils/seedGenerator';
 import { getCreaturePersonalityTags, getCreatureTinyFact } from '../../utils/personality';
 import { formatCreatureLength, formatCreatureWeight } from '../../utils/formatters';
+import { getThreatProfile } from '../../utils/threatAssessment';
 import type { Creature } from '../../types/creature';
 
 interface SpotlightHeroProps {
@@ -27,6 +28,7 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
   const isExtant = creature.extinctionYear === null;
   const personalityTags = getCreaturePersonalityTags(creature);
   const tinyFact = getCreatureTinyFact(creature);
+  const threat = getThreatProfile(creature);
 
   return (
     <section
@@ -136,37 +138,6 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
               pointerEvents: 'none'
             }} />
 
-            {/* Personality Tags Floater (§ 9) */}
-            <div style={{
-              position: 'absolute',
-              bottom: '16px',
-              left: '16px',
-              right: '16px',
-              display: 'flex',
-              gap: '6px',
-              flexWrap: 'wrap'
-            }}>
-              {personalityTags.map((tag, idx) => (
-                <span
-                  key={idx}
-                  style={{
-                    background: 'rgba(8, 10, 14, 0.75)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid var(--tint-3)',
-                    color: '#F8FAFC',
-                    padding: '3px 10px',
-                    borderRadius: 'var(--radius-full)',
-                    fontSize: '0.74rem',
-                    fontWeight: 600
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
-              <span className={`badge ${eraClass}`} style={{ fontSize: '0.72rem' }}>
-                {creature.era}
-              </span>
-            </div>
           </div>
 
           {/* Info Column */}
@@ -178,6 +149,16 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
             gap: '20px'
           }}>
             <div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                <span className={`badge ${eraClass}`} style={{ fontSize: '0.72rem' }}>
+                  {creature.era}
+                </span>
+                {personalityTags.map((tag, idx) => (
+                  <span key={idx} className="personality-tag" style={{ fontSize: '0.74rem', padding: '3px 10px' }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
               <p style={{
                 fontFamily: 'var(--font-serif)',
                 fontSize: '1.15rem',
@@ -271,11 +252,11 @@ export function SpotlightHero({ creature, onSelectCreature, onSurpriseMe }: Spot
                   borderRadius: 'var(--radius-sm)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '2px' }}>
-                    <ShieldAlert size={12} style={{ color: 'var(--danger)' }} />
-                    <span>THREAT</span>
+                    <ShieldAlert size={12} style={{ color: threat.color }} />
+                    <span>THREAT · {threat.label.toUpperCase()}</span>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--danger)' }}>
-                    {creature.stats?.dangerLevel || 5} / 10
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: threat.color }} title={threat.reason}>
+                    {threat.level} / 10
                   </div>
                 </div>
               </div>

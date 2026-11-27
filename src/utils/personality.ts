@@ -1,4 +1,5 @@
 import type { Creature } from '../types/creature';
+import { CLASS_NOUNS, getSimplifiedDossier, isBoilerplateText } from './creatureSimplifier';
 
 /**
  * Derives 2-3 warm, playful editorial personality tags for a creature.
@@ -73,7 +74,7 @@ export function getCreaturePersonalityTags(creature: Creature): string[] {
  * As defined in Section 10 of ui-design-update.md.
  */
 export function getCreatureTinyFact(creature: Creature): string {
-  if (!creature.description) return `${creature.commonName} is one of Earth's most remarkable organisms.`;
+  if (isBoilerplateText(creature.description)) return getSimplifiedDossier(creature).superpower;
 
   // Grab the first or most interesting sentence
   const sentences = creature.description.split(/(?<=[.!?])\s+/);
@@ -115,10 +116,14 @@ export function getCreatureFamilySummary(creature: Creature): string {
   const taxFamily = creature.taxonomy.family || '';
 
   if (taxClass) {
-    parts.push(taxClass.toLowerCase());
+    parts.push(CLASS_NOUNS[taxClass.toLowerCase()] || taxClass.toLowerCase());
+  } else {
+    parts.push('species');
   }
 
-  if (taxFamily) {
+  // Live records sometimes carry the class name as a placeholder family.
+  const familyKnown = taxFamily && !['unknown', 'fauna', taxClass.toLowerCase()].includes(taxFamily.toLowerCase());
+  if (familyKnown) {
     return `${parts.join(' ')} in the ${taxFamily} family.`;
   }
 
@@ -176,6 +181,18 @@ export function getCreatureHumanScale(creature: Creature): ScaleComparison {
       creatureLengthM: lengthM,
       visualRatio: Math.min(0.75, Math.max(0.25, lengthM / 3.0)),
       icon: '🧍'
+    };
+  }
+
+  if (lengthM <= 6) {
+    const ratio = (lengthM / humanM).toFixed(1);
+    return {
+      label: `Large (${lengthM} m)`,
+      subtext: `About ${ratio}× the length of an adult human (${humanM} m).`,
+      humanHeightM: humanM,
+      creatureLengthM: lengthM,
+      visualRatio: Math.min(0.95, lengthM / 6),
+      icon: '🐘'
     };
   }
 

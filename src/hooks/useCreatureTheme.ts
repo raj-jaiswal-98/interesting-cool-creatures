@@ -21,7 +21,9 @@ export function useCreatureTheme(creature: Creature | null | undefined): UseCrea
     let isMounted = true;
     setIsAnalyzing(true);
 
-    themeEngine.applyCreatureTheme(creature.photoUrl, creature.themePalette).then((applied) => {
+    themeEngine.applyCreatureTheme(creature.photoUrl, creature.themePalette, {
+      preferPhoto: creature.extinctionYear === null
+    }).then((applied) => {
       if (isMounted) setPalette(applied);
     });
 

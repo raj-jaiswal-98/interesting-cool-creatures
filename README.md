@@ -41,6 +41,8 @@
 
 6. **Deep-Dive Tabbed Modal & Time-Travel Map:**
    - **Overview Tab:** Morphometrics in human units (grams, cm/mm, tons, era dates), diet, threat index, and conversational AI translation.
+   - **Threat assessment:** [`threatAssessment.ts`](src/utils/threatAssessment.ts) rates danger *to people* from genus/family/order rules and common-name cues (big cats, bears, crocodilians, venomous snakes, box jellyfish, mosquitoes and more), with a size/diet fallback. Each rating carries a kind (Apex Predator, Venomous, Powerful Giant, Harmless and others) and a one-line reason. Curated catalog levels are kept.
+   - **Field dossier:** [`creatureSimplifier.ts`](src/utils/creatureSimplifier.ts) builds the plain-English plaque from the Wikipedia summary ([`wikipediaService.ts`](src/services/api/wikipediaService.ts), cached in IndexedDB). It scores sentences for abilities and surprising facts, filters out placeholder text, and describes size with everyday objects. With no article available it falls back to class-level biology.
    - **Occurrence Map Tab:** Geographic projection plotting real-world specimen records and prehistoric fossil formations.
    - **Future Adaptation Lab:** Simulates speculative evolutionary descendants under warming (+4°C), hypoxia, radiation, or urban stressors.
    - **Creature Clash Duel Arena:** Turn-based duel engine comparing physical mass, danger level, and biome advantages.
@@ -71,7 +73,9 @@ All tokens live in [`src/index.css`](src/index.css); the per-creature accent is 
 - **Instrument Serif** italic (`--font-serif`): scientific names.
 - **Cutive Mono** (`--font-mono`): labels, stats, and the tagline.
 
-**Surfaces.** Components use only these tokens, never literal colors (canvas drawing is the exception, since canvas can't read CSS variables; the map reads the live accent with `getComputedStyle`). `.topo-section` / `.topo-surface` add the contour texture from [`src/assets/topography.svg`](src/assets/topography.svg), a generated tile that repeats seamlessly. `.ink-surface` marks raised dark panels such as the modal tab strip and specimen column.
+**Surfaces.** Components use only these tokens, never literal colors (canvas drawing is the exception, since canvas can't read CSS variables; the map reads the live accent with `getComputedStyle`). `.topo-section` / `.topo-surface` add the contour texture from [`src/assets/topography.svg`](src/assets/topography.svg), a generated tile that repeats seamlessly. `.ink-surface` marks raised dark panels such as the modal tab strip and specimen column. Photos carry no overlay stamps; era and status chips sit beside the image.
+
+**Per-creature accent.** Living species take their accent from their own photo: `themeEngine.extractPhotoPalette` fetches the image as a blob, picks the most vivid ColorThief swatch, and lifts its lightness (keeping the hue) until it reaches 3:1 contrast on ink. Extinct species and failed fetches fall back to the creature palette, made legible the same way.
 
 **Motion utilities:** `.anim-breathe`, `.anim-fidget`, `.anim-drift`, `.caret`. They use the individual `scale` / `rotate` / `translate` properties so they compose with inline `transform` hover effects. Shared easing: `cubic-bezier(0.16, 1, 0.3, 1)`.
 
@@ -129,11 +133,11 @@ interesting-cool-creatures/
 │   │   ├── creatureCatalog.ts               # Curated species catalog across all epochs
 │   │   └── creatureEmbeddings.json          # Precomputed catalog vectors
 │   ├── types/                               # Creature, AI, and normalized provider models
-│   ├── utils/                               # Formatters, personality tags, seed hashing
+│   ├── utils/                               # Formatters, threat assessment, dossier, personality tags, seed hashing
 │   ├── index.css                            # Ink design system & CSS tokens
 │   ├── App.tsx                              # Application shell & header
 │   └── main.tsx                             # Entry point
-├── tests/                                   # Vitest suite (10 files, 55 tests)
+├── tests/                                   # Vitest suite (11 files, 65 tests)
 ├── index.html                               # SEO meta, Open Graph, JSON-LD, noscript
 ├── package.json
 └── vite.config.ts
@@ -185,7 +189,7 @@ SEO is handled statically:
 
 ## 🧪 Testing & Validation
 
-All 10 test files (55 tests) pass in Vitest:
+All 11 test files (65 tests) pass in Vitest:
 
 - **`seedGenerator.test.ts`**: deterministic UTC date-based spotlight hashing.
 - **`themeEngine.test.ts`**: luminance, contrast, and CSS property injection.
@@ -195,3 +199,4 @@ All 10 test files (55 tests) pass in Vitest:
 - **`hooks.test.ts`**: search scoring and creature comparison.
 - **`formatters.test.ts` & `personality.test.ts`**: human-unit formatting and personality tags.
 - **`creatureCatalog.test.ts` & `creatureSimplifier.test.ts`**: schema integrity and taxonomic text simplification.
+- **`threatAssessment.test.ts`**: taxon-aware threat ratings, boilerplate-free and Wikipedia-built dossiers, and photo-accent legibility.

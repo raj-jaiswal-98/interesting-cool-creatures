@@ -3,6 +3,7 @@ import { Swords, Trophy, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { chromeAI } from '../../services/ai/chromeAIService';
 import { CREATURE_CATALOG } from '../../data/creatureCatalog';
+import { getThreatProfile } from '../../utils/threatAssessment';
 import type { Creature } from '../../types/creature';
 import type { CreatureClashResult } from '../../types/ai';
 
@@ -125,7 +126,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
           <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{creature.commonName}</strong>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{creature.era} Era</span>
           <div style={{ fontSize: '0.8rem', color: 'var(--danger)', fontWeight: 700 }}>
-            Threat: {creature.stats?.dangerLevel || 5}/10
+            Threat: {getThreatProfile(creature).level}/10
           </div>
         </div>
 
@@ -171,7 +172,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
           <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{opponent.commonName}</strong>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{opponent.era} Era</span>
           <div style={{ fontSize: '0.8rem', color: 'var(--danger)', fontWeight: 700 }}>
-            Threat: {opponent.stats?.dangerLevel || 5}/10
+            Threat: {getThreatProfile(opponent).level}/10
           </div>
         </div>
       </div>

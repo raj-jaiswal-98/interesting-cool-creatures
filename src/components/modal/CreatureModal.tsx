@@ -35,7 +35,7 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
   // Trigger dynamic theme extraction on mount
   useEffect(() => {
     if (creature) {
-      themeEngine.applyCreatureTheme(creature.photoUrl, creature.themePalette);
+      themeEngine.applyCreatureTheme(creature.photoUrl, creature.themePalette, { preferPhoto: creature.extinctionYear === null });
     }
   }, [creature]);
 

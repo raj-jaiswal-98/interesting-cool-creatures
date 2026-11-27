@@ -51,8 +51,8 @@ describe('CreatureSimplifier Utility', () => {
     };
 
     const dossier = getSimplifiedDossier(mockDynamicCreature);
-    expect(dossier.headline).toBe('Deep Sea Crown Jelly (Modern Era)');
+    expect(dossier.headline).toBe('Deep Sea Crown Jelly: a living jellyfish');
     expect(dossier.superpower).toContain('bioluminescent');
-    expect(dossier.sizeComparison).toBe('Pocket / Hand-sized');
+    expect(dossier.sizeComparison).toContain('pencil');
   });
 });

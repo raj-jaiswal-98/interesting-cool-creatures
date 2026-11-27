@@ -1,10 +1,19 @@
 import type { Creature } from '../types/creature';
+import type { WikiSummary } from '../services/api/wikipediaService';
+import { formatCreatureLength, formatCreatureWeight } from './formatters';
+import { getThreatProfile } from './threatAssessment';
 
 export interface SimplifiedDossier {
   headline: string;
   superpower: string;
   funFact: string;
   sizeComparison: string;
+  /** Danger to people, e.g. "Apex Predator: ..." */
+  danger?: string;
+  source?: 'curated' | 'wikipedia' | 'record' | 'field';
+  sourceUrl?: string;
+  /** Full readable text for the Science view. */
+  summary?: string | null;
 }
 
 const CURATED_SIMPLIFIED: Record<string, SimplifiedDossier> = {
@@ -100,41 +109,156 @@ const CURATED_SIMPLIFIED: Record<string, SimplifiedDossier> = {
   }
 };
 
-/**
- * Returns a simplified, digestible ELI5 dossier for any creature.
- */
-export function getSimplifiedDossier(creature: Creature): SimplifiedDossier {
-  // If curated match exists
-  if (CURATED_SIMPLIFIED[creature.id]) {
-    return CURATED_SIMPLIFIED[creature.id];
+/** Phrases that mark auto-generated placeholder text rather than real biology. */
+const BOILERPLATE = /research-grade|documented in|verified through|observer network|photographed in the wild|open scientific biodiversity telemetry|extraordinary species documented/i;
+
+export function isBoilerplateText(text: string | undefined | null): boolean {
+  return !text || BOILERPLATE.test(text);
+}
+
+const ABILITY =
+  /\b(can|able to|capable|adapt|uses?|ability|known for|hunts?|ambush|speed|fastest|strongest|venom|camouflag|regenerat|mimic|echolocat|migrat|nocturnal|bite|sting|glide|dives?|swims?|climb|dig|burrow|senses?|sight|smell|hearing|tongue|claws?|jaws?|teeth|horns?|spines?|armou?r|electric|biolumin)/gi;
+const FACT =
+  /(\d|\b\w+est\b|\bonly\b|\bunique\b|\brecord|\bnamed\b|\bunlike\b|\bmost\b|\bnational\b|\bsymbol\b|\bendangered\b|\bthreatened\b|\bdiscovered\b|\bancient\b|\bmillion\b)/gi;
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Splits prose into clean, display-ready sentences. */
+export function toSentences(text: string): string[] {
+  return text
+    .replace(/\s*\([^()]*\)/g, '') // drop parentheticals (pronunciations, synonyms)
+    .replace(/\s*\[[^\]]*\]/g, '')
+    .replace(/\s+/g, ' ')
+    .split(/(?<=[.!?])\s+(?=[A-Z])/)
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 25 && s.length <= 280 && !BOILERPLATE.test(s));
+}
+
+const score = (s: string, re: RegExp) => (s.match(re) || []).length;
+
+function pickBest(sentences: string[], re: RegExp, exclude: Set<string>): string | null {
+  let best: string | null = null;
+  let bestScore = 0;
+  for (const s of sentences) {
+    if (exclude.has(s)) continue;
+    const sc = score(s, re);
+    if (sc > bestScore) {
+      best = s;
+      bestScore = sc;
+    }
+  }
+  return best;
+}
+
+/** Everyday-object comparison for a body length (and weight when known). */
+export function describeRealScale(lengthM: number, weightKg?: number): string {
+  let object: string;
+  if (lengthM < 0.001) object = 'Smaller than a grain of sand';
+  else if (lengthM < 0.01) object = 'About the size of a grain of rice';
+  else if (lengthM < 0.03) object = 'About as long as a paperclip';
+  else if (lengthM < 0.1) object = 'Would fit on a credit card';
+  else if (lengthM < 0.3) object = 'About as long as a pencil';
+  else if (lengthM < 0.7) object = 'About the size of a house cat';
+  else if (lengthM < 1.5) object = 'About as big as a large dog';
+  else if (lengthM < 2.5) object = 'About as long as a sofa';
+  else if (lengthM < 4) object = 'About as long as a small car';
+  else if (lengthM < 8) object = 'About as long as a pickup truck';
+  else if (lengthM < 15) object = 'About as long as a city bus';
+  else if (lengthM < 30) object = 'Longer than a tennis court is wide';
+  else object = 'Longer than a basketball court';
+
+  const measures = [formatCreatureLength(lengthM, true)];
+  if (weightKg !== undefined && weightKg > 0) measures.push(formatCreatureWeight(weightKg, true));
+  return `${object} (${measures.join(', ')})`;
+}
+
+const CLASS_TRAITS: Record<string, string> = {
+  mammalia: 'Keen senses and a warm-blooded body keep it active in heat and cold alike.',
+  aves: 'Feathers, hollow bones and sharp eyesight shape everything about how it lives.',
+  reptilia: 'Scaly, watertight skin lets it thrive where other animals would dry out.',
+  amphibia: 'It breathes partly through its moist skin and starts life in water.',
+  actinopterygii: 'Gills pull oxygen from the water while a swim bladder keeps it effortlessly buoyant.',
+  chondrichthyes: 'A skeleton of flexible cartilage and senses that detect the electric fields of prey.',
+  insecta: 'Six legs and a tough exoskeleton packed into a tiny, efficient body.',
+  arachnida: 'Eight legs and sensitive hairs that pick up the faintest vibration.',
+  mollusca: 'A soft, muscular body, often guarded by a shell it builds itself.'
+};
+
+export const CLASS_NOUNS: Record<string, string> = {
+  mammalia: 'mammal', aves: 'bird', reptilia: 'reptile', amphibia: 'amphibian',
+  actinopterygii: 'ray-finned fish', chondrichthyes: 'cartilaginous fish', insecta: 'insect',
+  arachnida: 'arachnid', mollusca: 'mollusk', scyphozoa: 'jellyfish', cephalopoda: 'cephalopod',
+  gastropoda: 'sea slug or snail', dinosauria: 'dinosaur'
+};
+
+/** e.g. "Bengal Tiger: a living mammal and apex predator". */
+function plainHeadline(creature: Creature, role: string | null): string {
+  const noun = CLASS_NOUNS[(creature.taxonomy.class || '').toLowerCase()] || 'species';
+  const status = creature.extinctionYear === null ? 'living' : 'extinct';
+  return `${creature.commonName}: a ${status} ${noun}${role ? ` and ${role.toLowerCase()}` : ''}`;
+}
+
+/** Builds the plain-English dossier from curated data, Wikipedia, or field data. */
+export function buildDossier(creature: Creature, wiki?: WikiSummary | null): SimplifiedDossier {
+  const threat = getThreatProfile(creature);
+  const danger = `${threat.label}: ${threat.reason}`;
+  const curated = CURATED_SIMPLIFIED[creature.id];
+  if (curated) {
+    return { ...curated, danger, source: 'curated', sourceUrl: creature.wikiUrl, summary: creature.description };
   }
 
-  // Algorithmic synthesis for dynamic creatures
-  const sentences = creature.description
-    .split(/(?<=[.!?])\s+/)
-    .filter((s) => s.trim().length > 10);
+  const ownText = isBoilerplateText(creature.description) ? '' : creature.description;
+  const text = wiki?.extract || ownText;
+  const sentences = toSentences(text);
+  const used = new Set<string>();
 
-  const headline = `${creature.commonName} (${creature.era} Era)`;
-  const superpower = sentences[0] || `An extraordinary species adapted to ${creature.habitat}.`;
-  const funFact = sentences[1] || `Classified as ${creature.taxonomy.class || 'Fauna'} in the family ${creature.taxonomy.family || creature.taxonomy.order}.`;
-  
-  let sizeComparison = `${creature.stats.lengthMeters} m`;
-  if (creature.stats.lengthMeters < 0.01) {
-    sizeComparison = 'Microscopic organism';
-  } else if (creature.stats.lengthMeters < 0.3) {
-    sizeComparison = 'Pocket / Hand-sized';
-  } else if (creature.stats.lengthMeters < 1.5) {
-    sizeComparison = 'Small to medium animal';
-  } else if (creature.stats.lengthMeters < 4.0) {
-    sizeComparison = 'Large vehicle-sized';
+  // Headline: Wikipedia's tagline, else a trimmed opening sentence.
+  let headline: string;
+  if (wiki?.tagline) {
+    headline = `${creature.commonName}: ${wiki.tagline.charAt(0).toLowerCase()}${wiki.tagline.slice(1)}`;
+  } else if (sentences.length >= 3 && sentences[0].length <= 140) {
+    headline = sentences[0];
+    used.add(sentences[0]);
   } else {
-    sizeComparison = 'Colossal megafauna';
+    headline = plainHeadline(creature, threat.level >= 7 ? threat.label : null);
   }
+
+  // The first sentence is usually a taxonomic definition; prefer later ones.
+  const body = sentences.length > 2 ? sentences.slice(1) : sentences;
+  const superpower =
+    pickBest(body, ABILITY, used) ??
+    (wiki ? body.find((s) => !used.has(s)) : undefined) ??
+    CLASS_TRAITS[(creature.taxonomy.class || '').toLowerCase()] ??
+    `Specially adapted to life in ${creature.habitat}.`;
+  used.add(superpower);
+
+  const family = creature.taxonomy.family;
+  const familyKnown = !!family && family !== 'Unknown' && family !== creature.taxonomy.class && family !== 'Fauna';
+  const order = creature.taxonomy.order;
+  const orderPart = order && order !== 'Unknown' && order !== creature.taxonomy.genus ? `, part of the order ${order}` : '';
+  const sites = creature.coordinates.length;
+  const funFact =
+    pickBest(sentences, FACT, used) ??
+    sentences.find((s) => !used.has(s)) ??
+    (familyKnown
+      ? `It belongs to the ${family} family${orderPart}.`
+      : sites > 0
+      ? `Recorded at ${sites} site${sites === 1 ? '' : 's'} by citizen scientists, most recently near ${creature.coordinates[0].country}.`
+      : `Its scientific name is ${creature.scientificName}.`);
 
   return {
-    headline,
-    superpower,
-    funFact,
-    sizeComparison
+    headline: cap(headline),
+    superpower: cap(superpower),
+    funFact: cap(funFact),
+    sizeComparison: describeRealScale(creature.stats.lengthMeters, creature.stats.weightKg),
+    danger,
+    source: wiki ? 'wikipedia' : ownText ? 'record' : 'field',
+    sourceUrl: wiki?.url || creature.wikiUrl,
+    summary: wiki?.extract || ownText || null
   };
+}
+
+/** Synchronous dossier (no network); see buildDossier for the Wikipedia-enriched version. */
+export function getSimplifiedDossier(creature: Creature): SimplifiedDossier {
+  return buildDossier(creature, null);
 }

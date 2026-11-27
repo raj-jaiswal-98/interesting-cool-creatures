@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Sparkles,
   Bot,
@@ -15,16 +15,16 @@ import {
 } from 'lucide-react';
 import { chromeAI } from '../../services/ai/chromeAIService';
 import { creatureResolver } from '../../services/resolver/creatureResolver';
-import { getSimplifiedDossier } from '../../utils/creatureSimplifier';
+import { buildDossier } from '../../utils/creatureSimplifier';
+import { getThreatProfile } from '../../utils/threatAssessment';
+import { getWikiSummary, type WikiSummary } from '../../services/api/wikipediaService';
 import {
   getCreatureFamilySummary,
-  getCreatureHumanScale,
-  getCreaturePersonalityTags
+  getCreatureHumanScale
 } from '../../utils/personality';
 import {
   formatCreatureLength,
   formatCreatureWeight,
-  formatDangerLevel,
   formatExtinctionYear
 } from '../../utils/formatters';
 import type { Creature } from '../../types/creature';
@@ -45,11 +45,21 @@ export function OverviewTab({ creature }: OverviewTabProps) {
   const [curiousAnswer, setCuriousAnswer] = useState<string | null>(null);
   const [isLoadingCurious, setIsLoadingCurious] = useState(false);
 
-  const dossier = getSimplifiedDossier(creature);
+  const [wiki, setWiki] = useState<WikiSummary | null>(null);
+  const dossier = useMemo(() => buildDossier(creature, wiki), [creature, wiki]);
+  const threat = getThreatProfile(creature);
   const humanScale = getCreatureHumanScale(creature);
-  const personalityTags = getCreaturePersonalityTags(creature);
-  const isExtant = creature.extinctionYear === null;
-  const eraClass = `badge-${creature.era.toLowerCase()}`;
+
+  useEffect(() => {
+    let isMounted = true;
+    setWiki(null);
+    getWikiSummary(creature).then((summary) => {
+      if (isMounted) setWiki(summary);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [creature.id, creature.scientificName]);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,13 +114,6 @@ export function OverviewTab({ creature }: OverviewTabProps) {
     }
   };
 
-  const threatColor =
-    creature.stats?.dangerLevel >= 8
-      ? 'var(--danger)'
-      : creature.stats?.dangerLevel >= 5
-      ? 'var(--warn)'
-      : 'var(--success)';
-
   return (
     <div
       style={{
@@ -164,75 +167,6 @@ export function OverviewTab({ creature }: OverviewTabProps) {
             }}
           />
 
-          {/* Top Floating Badges */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '10px',
-              left: '10px',
-              right: '10px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              zIndex: 2
-            }}
-          >
-            <span
-              className={`badge ${eraClass}`}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.66rem',
-                padding: '3px 8px',
-                borderRadius: 'var(--radius-button)',
-                borderWidth: '1.5px'
-              }}
-            >
-              {creature.era}
-            </span>
-
-            <span
-              className={`badge ${isExtant ? 'badge-extant' : 'badge-extinct'}`}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.66rem',
-                padding: '3px 8px',
-                borderRadius: 'var(--radius-button)',
-                backdropFilter: 'blur(8px)'
-              }}
-            >
-              {isExtant ? 'LIVING SPECIES' : `EXTINCT • ${formatExtinctionYear(creature.extinctionYear, true)}`}
-            </span>
-          </div>
-
-          {/* Bottom Floating Personality Chips */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '10px',
-              left: '10px',
-              right: '10px',
-              display: 'flex',
-              gap: '4px',
-              flexWrap: 'wrap',
-              zIndex: 2
-            }}
-          >
-            {personalityTags.map((tag, idx) => (
-              <span
-                key={idx}
-                className="personality-tag"
-                style={{
-                  fontSize: '0.68rem',
-                  padding: '2px 8px',
-                  background: 'rgba(32, 30, 31, 0.9)',
-                  backdropFilter: 'blur(6px)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.6)'
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
         </div>
 
         {/* Specimen Vitals List */}
@@ -248,23 +182,26 @@ export function OverviewTab({ creature }: OverviewTabProps) {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
-                <ShieldAlert size={13} style={{ color: formatDangerLevel(creature.stats?.dangerLevel).color }} />
-                <span>THREAT: {formatDangerLevel(creature.stats?.dangerLevel).label.toUpperCase()}</span>
+                <ShieldAlert size={13} style={{ color: threat.color }} />
+                <span>THREAT: {threat.label.toUpperCase()}</span>
               </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.84rem', fontWeight: 800, color: formatDangerLevel(creature.stats?.dangerLevel).color }}>
-                {creature.stats?.dangerLevel || 5} / 10
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.84rem', fontWeight: 800, color: threat.color }}>
+                {threat.level} / 10
               </span>
             </div>
             <div style={{ width: '100%', height: '5px', background: 'var(--tint-2)', borderRadius: '3px', overflow: 'hidden' }}>
               <div
                 style={{
-                  width: `${((creature.stats?.dangerLevel || 5) / 10) * 100}%`,
+                  width: `${(threat.level / 10) * 100}%`,
                   height: '100%',
-                  background: formatDangerLevel(creature.stats?.dangerLevel).color,
+                  background: threat.color,
                   borderRadius: '3px'
                 }}
               />
             </div>
+            <p style={{ margin: '8px 0 0', fontSize: '0.74rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+              {threat.reason}
+            </p>
           </div>
 
           {/* Rarity & Observation Chips */}
@@ -531,13 +468,30 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                     <span style={{ color: 'var(--text-secondary)' }}>{dossier.sizeComparison}</span>
                   </div>
                 </div>
+
+                {dossier.danger && (
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <span style={{ fontSize: '1rem', lineHeight: 1 }}>⚠️</span>
+                    <div>
+                      <strong style={{ color: 'var(--text-primary)' }}>Danger to people: </strong>
+                      <span style={{ color: 'var(--text-secondary)' }}>{dossier.danger}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ) : storyMode === 'science' ? (
             <div style={{ fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
-              <p style={{ margin: '0 0 8px' }}>{creature.description}</p>
+              <p style={{ margin: '0 0 8px' }}>{dossier.summary || creature.description}</p>
               <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                Source: Primary biological record & peer-reviewed paleontology archives.
+                Source:{' '}
+                {dossier.sourceUrl ? (
+                  <a href={dossier.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)' }}>
+                    {dossier.source === 'wikipedia' ? 'Wikipedia' : dossier.source === 'curated' ? 'Curated museum record' : 'Field observation record'}
+                  </a>
+                ) : (
+                  'Field observation record'
+                )}
               </span>
             </div>
           ) : (
