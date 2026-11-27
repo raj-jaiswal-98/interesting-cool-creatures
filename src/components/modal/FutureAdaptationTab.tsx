@@ -87,7 +87,7 @@ export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
                 key={s.id}
                 onClick={() => setSelectedStressor(s.id)}
                 style={{
-                  background: isSelected ? 'rgba(0, 240, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                  background: isSelected ? 'color-mix(in srgb, var(--info) 12%, transparent)' : 'var(--tint-1)',
                   border: '1px solid',
                   borderColor: isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)',
                   borderRadius: 'var(--radius-md)',
@@ -99,7 +99,7 @@ export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                   <Icon size={16} style={{ color: isSelected ? 'var(--accent-primary)' : 'var(--text-secondary)' }} />
-                  <strong style={{ fontSize: '0.88rem', color: isSelected ? '#FFFFFF' : 'var(--text-primary)' }}>
+                  <strong style={{ fontSize: '0.88rem', color: isSelected ? 'var(--text-primary)' : 'var(--text-primary)' }}>
                     {s.label}
                   </strong>
                 </div>
@@ -137,8 +137,8 @@ export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
 
       {/* Simulation Results Display */}
       {simulationResult && (
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(13, 27, 36, 0.9) 0%, rgba(5, 11, 16, 0.95) 100%)',
+        <div className="ink-surface" style={{
+          background: 'var(--surface-card)',
           border: '1px solid var(--border-glow)',
           borderRadius: 'var(--radius-lg)',
           padding: '24px',
@@ -163,13 +163,13 @@ export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
+              background: 'color-mix(in srgb, var(--success) 15%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--success) 30%, transparent)',
               borderRadius: 'var(--radius-full)',
               padding: '6px 14px'
             }}>
-              <ShieldCheck size={16} style={{ color: '#34D399' }} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#34D399' }}>
+              <ShieldCheck size={16} style={{ color: 'var(--success)' }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--success)' }}>
                 {simulationResult.survivalRating}% Survival Viability
               </span>
             </div>
@@ -177,7 +177,7 @@ export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
 
           {/* AI Narrative */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: 'var(--tint-1)',
             borderLeft: '3px solid var(--accent-primary)',
             padding: '14px 18px',
             borderRadius: '0 var(--radius-sm) var(--radius-sm) 0'
@@ -197,7 +197,7 @@ export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
                 <div
                   key={idx}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.02)',
+                    background: 'var(--tint-1)',
                     border: '1px solid var(--border-subtle)',
                     borderRadius: 'var(--radius-sm)',
                     padding: '12px 16px'
@@ -228,7 +228,7 @@ export function FutureAdaptationTab({ creature }: FutureAdaptationTabProps) {
               width: '8px',
               height: '8px',
               borderRadius: '50%',
-              background: simulationResult.isNativeAI ? '#10B981' : '#38BDF8'
+              background: simulationResult.isNativeAI ? 'var(--success)' : 'var(--info)'
             }} />
             <span>
               {simulationResult.isNativeAI

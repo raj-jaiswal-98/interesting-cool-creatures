@@ -68,7 +68,7 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
             height: '160px',
             borderRadius: 'var(--radius-md)',
             overflow: 'hidden',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
+            border: '1px solid var(--tint-3)',
             background: '#040507',
             display: 'flex',
             alignItems: 'center',
@@ -101,7 +101,7 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
                 position: 'absolute',
                 top: '8px',
                 right: '8px',
-                background: 'rgba(0, 255, 102, 0.25)',
+                background: 'color-mix(in srgb, var(--accent-primary) 25%, transparent)',
                 border: '1px solid var(--accent-primary)',
                 color: 'var(--accent-primary)',
                 fontFamily: 'var(--font-mono)',
@@ -169,7 +169,7 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
               key={idx}
               style={{
                 fontSize: '0.66rem',
-                background: 'rgba(255, 255, 255, 0.05)',
+                background: 'var(--tint-2)',
                 color: 'var(--text-secondary)',
                 padding: '2px 7px',
                 borderRadius: 'var(--radius-full)',
@@ -231,7 +231,7 @@ export function TimelineNodeCard({ creature, onSelect }: TimelineNodeCardProps) 
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--text-muted)' }}>
             THREAT
           </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.76rem', fontWeight: 700, color: '#F87171' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.76rem', fontWeight: 700, color: 'var(--danger)' }}>
             {creature.stats?.dangerLevel || 5}/10
           </span>
         </div>

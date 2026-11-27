@@ -106,10 +106,10 @@ export function OverviewTab({ creature }: OverviewTabProps) {
 
   const threatColor =
     creature.stats?.dangerLevel >= 8
-      ? '#FF2E63'
+      ? 'var(--danger)'
       : creature.stats?.dangerLevel >= 5
-      ? '#FFB800'
-      : '#00FF66';
+      ? 'var(--warn)'
+      : 'var(--success)';
 
   return (
     <div
@@ -124,12 +124,12 @@ export function OverviewTab({ creature }: OverviewTabProps) {
       {/* ========================================================
           COLUMN 1 (LEFT): CINEMATIC SPECIMEN PLAQUE & SCALE
           ======================================================== */}
-      <div
+      <div className="ink-surface"
         style={{
           display: 'flex',
           flexDirection: 'column',
           gap: '14px',
-          background: '#090A0D',
+          background: 'var(--ink-deep)',
           border: '1.5px solid var(--brutalist-border)',
           borderRadius: 'var(--radius-card)',
           padding: '16px',
@@ -144,7 +144,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
             height: '260px',
             borderRadius: '12px',
             overflow: 'hidden',
-            border: '1.5px solid rgba(255, 255, 255, 0.16)',
+            border: '1.5px solid var(--tint-3)',
             background: '#040507',
             boxShadow: 'inset 0 0 25px rgba(0, 0, 0, 0.9), 4px 4px 0px rgba(0,0,0,0.8)'
           }}
@@ -224,7 +224,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 style={{
                   fontSize: '0.68rem',
                   padding: '2px 8px',
-                  background: 'rgba(5, 11, 16, 0.85)',
+                  background: 'rgba(32, 30, 31, 0.9)',
                   backdropFilter: 'blur(6px)',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.6)'
                 }}
@@ -240,8 +240,8 @@ export function OverviewTab({ creature }: OverviewTabProps) {
           {/* Threat Rating Bar */}
           <div
             style={{
-              background: 'rgba(0, 0, 0, 0.45)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'var(--well)',
+              border: '1px solid var(--tint-2)',
               borderRadius: '8px',
               padding: '10px 12px'
             }}
@@ -255,7 +255,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 {creature.stats?.dangerLevel || 5} / 10
               </span>
             </div>
-            <div style={{ width: '100%', height: '5px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+            <div style={{ width: '100%', height: '5px', background: 'var(--tint-2)', borderRadius: '3px', overflow: 'hidden' }}>
               <div
                 style={{
                   width: `${((creature.stats?.dangerLevel || 5) / 10) * 100}%`,
@@ -293,8 +293,8 @@ export function OverviewTab({ creature }: OverviewTabProps) {
           {/* Human Scale Comparison Bar */}
           <div
             style={{
-              background: 'rgba(0, 0, 0, 0.45)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'var(--well)',
+              border: '1px solid var(--tint-2)',
               borderRadius: '8px',
               padding: '12px'
             }}
@@ -313,8 +313,8 @@ export function OverviewTab({ creature }: OverviewTabProps) {
             <div style={{
               position: 'relative',
               height: '18px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'var(--tint-2)',
+              border: '1px solid var(--tint-3)',
               borderRadius: '6px',
               margin: '8px 0 6px',
               overflow: 'hidden',
@@ -325,7 +325,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 style={{
                   width: `${Math.round(humanScale.visualRatio * 100)}%`,
                   height: '100%',
-                  background: 'linear-gradient(90deg, rgba(0, 240, 255, 0.25) 0%, var(--accent-primary) 100%)',
+                  background: 'linear-gradient(90deg, color-mix(in srgb, var(--info) 25%, transparent) 0%, var(--accent-primary) 100%)',
                   borderRadius: '5px',
                   transition: 'width 0.4s ease'
                 }}
@@ -338,7 +338,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 gap: '4px',
                 fontSize: '0.65rem',
                 fontWeight: 800,
-                color: '#FFFFFF',
+                color: 'var(--text-primary)',
                 textShadow: '0 1px 3px rgba(0,0,0,0.8)'
               }}>
                 <span>🧍 1.8m Human</span>
@@ -388,10 +388,10 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.7rem',
                   color: 'var(--text-muted)',
-                  background: 'rgba(255, 255, 255, 0.05)',
+                  background: 'var(--tint-2)',
                   padding: '2px 8px',
                   borderRadius: 'var(--radius-button)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                  border: '1px solid var(--tint-3)'
                 }}
               >
                 Class {creature.taxonomy.class}
@@ -404,7 +404,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
             color: 'var(--text-secondary)',
             lineHeight: 1.4,
             padding: '6px 12px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: 'var(--tint-1)',
             borderRadius: '6px',
             border: '1px solid var(--border-subtle)',
             display: 'inline-block'
@@ -416,10 +416,10 @@ export function OverviewTab({ creature }: OverviewTabProps) {
         {/* Story-First Museum Plaque with Mode Switcher */}
         <div
           style={{
-            background: 'rgba(0, 0, 0, 0.5)',
+            background: 'var(--well)',
             border: storyMode === 'story'
               ? '1.5px solid var(--accent-primary)'
-              : '1px solid rgba(255, 255, 255, 0.12)',
+              : '1px solid var(--tint-3)',
             borderRadius: 'var(--radius-card)',
             padding: '16px',
             transition: 'border-color 0.2s ease',
@@ -493,7 +493,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
 
           {/* Plaque Body */}
           {storyMode === 'story' ? (
-            <div style={{ fontSize: '0.9rem', lineHeight: 1.55, color: '#F1F5F9' }}>
+            <div style={{ fontSize: '0.9rem', lineHeight: 1.55, color: 'var(--text-primary)' }}>
               {/* Bold Headline Quote */}
               <div style={{
                 fontSize: '1rem',
@@ -511,7 +511,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <span style={{ fontSize: '1rem', lineHeight: 1 }}>⚡</span>
                   <div>
-                    <strong style={{ color: '#FFFFFF' }}>Superpower: </strong>
+                    <strong style={{ color: 'var(--text-primary)' }}>Superpower: </strong>
                     <span style={{ color: 'var(--text-secondary)' }}>{dossier.superpower}</span>
                   </div>
                 </div>
@@ -519,7 +519,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <span style={{ fontSize: '1rem', lineHeight: 1 }}>💡</span>
                   <div>
-                    <strong style={{ color: '#FFFFFF' }}>Did you know? </strong>
+                    <strong style={{ color: 'var(--text-primary)' }}>Did you know? </strong>
                     <span style={{ color: 'var(--text-secondary)' }}>{dossier.funFact}</span>
                   </div>
                 </div>
@@ -527,7 +527,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <span style={{ fontSize: '1rem', lineHeight: 1 }}>📏</span>
                   <div>
-                    <strong style={{ color: '#FFFFFF' }}>Real scale: </strong>
+                    <strong style={{ color: 'var(--text-primary)' }}>Real scale: </strong>
                     <span style={{ color: 'var(--text-secondary)' }}>{dossier.sizeComparison}</span>
                   </div>
                 </div>
@@ -541,7 +541,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
               </span>
             </div>
           ) : (
-            <div style={{ fontSize: '0.9rem', lineHeight: 1.55, color: '#F1F5F9' }}>
+            <div style={{ fontSize: '0.9rem', lineHeight: 1.55, color: 'var(--text-primary)' }}>
               {aiSummary ? (
                 <>
                   <p style={{ margin: '0 0 8px', fontStyle: 'italic' }}>"{aiSummary.text}"</p>
@@ -561,7 +561,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
 
         {/* Interactive "Curious?" Pill Dock */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.02)',
+          background: 'var(--tint-1)',
           border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-card)',
           padding: '14px 16px'
@@ -594,7 +594,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                     padding: '6px 14px',
                     fontSize: '0.78rem',
                     borderRadius: 'var(--radius-button)',
-                    background: isActive ? 'rgba(0, 240, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                    background: isActive ? 'color-mix(in srgb, var(--info) 12%, transparent)' : 'var(--tint-2)',
                     borderColor: isActive ? 'var(--accent-primary)' : 'var(--border-subtle)',
                     color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)'
                   }}
@@ -610,8 +610,8 @@ export function OverviewTab({ creature }: OverviewTabProps) {
               marginTop: '12px',
               padding: '12px 14px',
               borderRadius: '10px',
-              background: 'rgba(0, 240, 255, 0.05)',
-              border: '1px solid rgba(0, 240, 255, 0.22)',
+              background: 'color-mix(in srgb, var(--info) 5%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--info) 22%, transparent)',
               fontSize: '0.88rem',
               lineHeight: 1.5,
               color: 'var(--text-primary)'
@@ -624,7 +624,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
               ) : (
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                   <span style={{ color: 'var(--accent-primary)', fontSize: '1.1rem', lineHeight: 1 }}>💬</span>
-                  <div style={{ color: '#F1F5F9' }}>{curiousAnswer}</div>
+                  <div style={{ color: 'var(--text-primary)' }}>{curiousAnswer}</div>
                 </div>
               )}
             </div>
@@ -698,8 +698,8 @@ export function OverviewTab({ creature }: OverviewTabProps) {
         {creature.taxonomy && (
           <details
             style={{
-              background: 'rgba(0, 0, 0, 0.4)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'var(--well)',
+              border: '1px solid var(--tint-2)',
               borderRadius: '8px',
               padding: '10px 14px'
             }}
@@ -724,7 +724,7 @@ export function OverviewTab({ creature }: OverviewTabProps) {
                 gap: '6px',
                 marginTop: '10px',
                 paddingTop: '8px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.06)'
+                borderTop: '1px solid var(--tint-2)'
               }}
             >
               {Object.entries(creature.taxonomy).map(([rank, name]) => (

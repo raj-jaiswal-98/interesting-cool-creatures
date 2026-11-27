@@ -111,21 +111,32 @@ export function projectEquirectangular(lng: number, lat: number, width: number, 
 /**
  * Draws the complete world map with landmasses, glowing coastlines, and coordinates onto a Canvas context
  */
+/**
+ * Converts a #RRGGBB (or #RGB) color to rgba() with the given alpha, for canvas use.
+ */
+export function withAlpha(hex: string, alpha: number): string {
+  let h = hex.trim().replace('#', '');
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const n = parseInt(h, 16);
+  if (h.length !== 6 || Number.isNaN(n)) return `rgba(252, 65, 9, ${alpha})`;
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
 export function renderWorldMapCanvas(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
-  accentColor = '#00F0FF'
+  accentColor = '#FC4109'
 ) {
   // 1. Ocean Background Fill with subtle atmospheric radial gradient
   const oceanGrad = ctx.createRadialGradient(width / 2, height / 2, width / 8, width / 2, height / 2, width / 1.5);
-  oceanGrad.addColorStop(0, '#071624');
-  oceanGrad.addColorStop(1, '#030B12');
+  oceanGrad.addColorStop(0, '#262324');
+  oceanGrad.addColorStop(1, '#161415');
   ctx.fillStyle = oceanGrad;
   ctx.fillRect(0, 0, width, height);
 
   // 2. Latitude & Longitude Graticule Grid Lines
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+  ctx.strokeStyle = 'rgba(244, 239, 232, 0.05)';
   ctx.lineWidth = 1;
 
   // Meridians (every 30 degrees)
@@ -147,7 +158,7 @@ export function renderWorldMapCanvas(
   }
 
   // Equator & Prime Meridian highlight
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
+  ctx.strokeStyle = withAlpha(accentColor, 0.22);
   ctx.lineWidth = 1.2;
   const [, eqY] = projectEquirectangular(0, 0, width, height);
   ctx.beginPath();
@@ -177,16 +188,16 @@ export function renderWorldMapCanvas(
     ctx.closePath();
 
     // Continental landmass fill
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.085)';
+    ctx.fillStyle = 'rgba(244, 239, 232, 0.09)';
     ctx.fill();
 
     // Coastline stroke
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+    ctx.strokeStyle = 'rgba(244, 239, 232, 0.32)';
     ctx.lineWidth = 1.4;
     ctx.stroke();
 
     // Subtle internal coastal aura
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.strokeStyle = 'rgba(244, 239, 232, 0.12)';
     ctx.lineWidth = 0.6;
     ctx.stroke();
   }

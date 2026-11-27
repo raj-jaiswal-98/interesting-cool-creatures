@@ -48,7 +48,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
       {/* Tab Header */}
       <div>
         <h4 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <Swords size={20} style={{ color: '#F87171' }} />
+          <Swords size={20} style={{ color: 'var(--danger)' }} />
           <span>Who wins? (Battle Arena)</span>
         </h4>
         <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
@@ -61,7 +61,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        background: 'rgba(255, 255, 255, 0.03)',
+        background: 'var(--tint-1)',
         border: '1px solid var(--border-subtle)',
         padding: '12px 18px',
         borderRadius: 'var(--radius-md)'
@@ -77,9 +77,9 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
           }}
           style={{
             flex: 1,
-            background: '#0B1622',
+            background: 'var(--tint-1)',
             border: '1px solid var(--border-subtle)',
-            color: '#FFFFFF',
+            color: 'var(--text-primary)',
             borderRadius: 'var(--radius-sm)',
             padding: '8px 12px',
             fontSize: '0.9rem',
@@ -106,7 +106,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
       }}>
         {/* Fighter 1 (Current Creature) */}
         <div style={{
-          background: 'rgba(0, 240, 255, 0.05)',
+          background: 'color-mix(in srgb, var(--info) 5%, transparent)',
           border: '1px solid var(--border-glow)',
           borderRadius: 'var(--radius-md)',
           padding: '16px',
@@ -124,7 +124,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
           />
           <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{creature.commonName}</strong>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{creature.era} Era</span>
-          <div style={{ fontSize: '0.8rem', color: '#F87171', fontWeight: 700 }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--danger)', fontWeight: 700 }}>
             Threat: {creature.stats?.dangerLevel || 5}/10
           </div>
         </div>
@@ -140,11 +140,11 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
             fontFamily: 'var(--font-mono)',
             fontSize: '1.2rem',
             fontWeight: 900,
-            color: '#F87171',
-            background: 'rgba(239, 68, 68, 0.1)',
+            color: 'var(--danger)',
+            background: 'color-mix(in srgb, var(--danger) 10%, transparent)',
             padding: '8px 12px',
             borderRadius: '50%',
-            border: '1px solid rgba(239, 68, 68, 0.3)'
+            border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)'
           }}>
             VS
           </span>
@@ -152,8 +152,8 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
 
         {/* Fighter 2 (Challenger) */}
         <div style={{
-          background: 'rgba(239, 68, 68, 0.05)',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
+          background: 'color-mix(in srgb, var(--danger) 5%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--danger) 30%, transparent)',
           borderRadius: 'var(--radius-md)',
           padding: '16px',
           textAlign: 'center',
@@ -166,11 +166,11 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
             src={opponent.photoUrl}
             alt={opponent.commonName}
             referrerPolicy="no-referrer"
-            style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #F87171' }}
+            style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--danger)' }}
           />
           <strong style={{ fontSize: '1rem', color: 'var(--text-primary)' }}>{opponent.commonName}</strong>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{opponent.era} Era</span>
-          <div style={{ fontSize: '0.8rem', color: '#F87171', fontWeight: 700 }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--danger)', fontWeight: 700 }}>
             Threat: {opponent.stats?.dangerLevel || 5}/10
           </div>
         </div>
@@ -183,9 +183,9 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
           disabled={isFighting}
           className="btn btn-primary"
           style={{
-            background: 'linear-gradient(135deg, #F87171 0%, #EF4444 100%)',
+            background: 'linear-gradient(135deg, var(--danger) 0%, color-mix(in srgb, var(--danger) 78%, black) 100%)',
             color: '#FFFFFF',
-            boxShadow: '0 0 20px rgba(239, 68, 68, 0.4)',
+            boxShadow: '0 0 20px color-mix(in srgb, var(--danger) 40%, transparent)',
             padding: '12px 28px',
             borderRadius: 'var(--radius-button)'
           }}
@@ -207,8 +207,8 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
 
       {/* Duel Outcome Card */}
       {duelResult && (
-        <div style={{
-          background: 'rgba(5, 11, 16, 0.95)',
+        <div className="ink-surface" style={{
+          background: 'var(--surface-card)',
           border: '1px solid var(--border-glow)',
           borderRadius: 'var(--radius-lg)',
           padding: '24px',
@@ -222,18 +222,18 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(245, 158, 11, 0.12)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
+            background: 'color-mix(in srgb, var(--warn) 12%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--warn) 30%, transparent)',
             borderRadius: 'var(--radius-md)',
             padding: '14px 18px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Trophy size={24} style={{ color: '#F59E0B' }} />
+              <Trophy size={24} style={{ color: 'var(--warn)' }} />
               <div>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#F59E0B', letterSpacing: '0.05em' }}>
+                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--warn)', letterSpacing: '0.05em' }}>
                   DECISIVE VICTOR
                 </span>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: '#FFFFFF' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
                   {duelResult.winner}
                 </h3>
               </div>
@@ -243,7 +243,7 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
               fontSize: '1.1rem',
               fontWeight: 800,
               fontFamily: 'var(--font-mono)',
-              color: '#F59E0B'
+              color: 'var(--warn)'
             }}>
               {duelResult.winProbability}% Win Rate
             </div>
@@ -259,8 +259,8 @@ export function CreatureClashTab({ creature }: CreatureClashTabProps) {
                 <div
                   key={i}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    borderLeft: '3px solid #F87171',
+                    background: 'var(--tint-1)',
+                    borderLeft: '3px solid var(--danger)',
                     padding: '10px 14px',
                     borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
                     fontSize: '0.85rem',

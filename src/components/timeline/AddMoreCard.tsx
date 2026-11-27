@@ -68,7 +68,7 @@ export function AddMoreCard({
         background: 'linear-gradient(145deg, rgba(10, 18, 28, 0.75) 0%, rgba(6, 11, 17, 0.9) 100%)',
         borderRadius: 'var(--radius-card)',
         border: '2px dashed var(--accent-primary)',
-        boxShadow: '0 8px 30px rgba(0, 255, 102, 0.08)',
+        boxShadow: '0 8px 30px color-mix(in srgb, var(--accent-primary) 8%, transparent)',
         minHeight: '340px',
         position: 'relative',
         overflow: 'hidden',
@@ -83,7 +83,7 @@ export function AddMoreCard({
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(0, 255, 102, 0.12)',
+              background: 'color-mix(in srgb, var(--accent-primary) 12%, transparent)',
               border: '1px solid var(--accent-primary)',
               color: 'var(--accent-primary)',
               padding: '3px 10px',
@@ -112,11 +112,11 @@ export function AddMoreCard({
             width: '64px',
             height: '64px',
             borderRadius: '50%',
-            background: 'rgba(0, 255, 102, 0.08)',
-            border: '1px solid rgba(0, 255, 102, 0.25)',
+            background: 'color-mix(in srgb, var(--accent-primary) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent)',
             margin: '8px auto 16px',
             color: 'var(--accent-primary)',
-            boxShadow: '0 0 20px rgba(0, 255, 102, 0.15)'
+            boxShadow: '0 0 20px color-mix(in srgb, var(--accent-primary) 15%, transparent)'
           }}
         >
           {isLoading ? (
@@ -158,7 +158,7 @@ export function AddMoreCard({
             fontWeight: 800,
             borderRadius: 'var(--radius-button)',
             width: '100%',
-            boxShadow: '0 4px 14px rgba(0, 255, 102, 0.2)'
+            boxShadow: '0 4px 14px color-mix(in srgb, var(--accent-primary) 20%, transparent)'
           }}
           id={`btn-fetch-more-${category.toLowerCase()}`}
           title={`Fetch rand(5,10) new unique ${categoryLabel} creatures`}
@@ -191,7 +191,7 @@ export function AddMoreCard({
               fontSize: '0.78rem',
               borderRadius: 'var(--radius-button)',
               width: '100%',
-              background: 'rgba(255, 255, 255, 0.04)',
+              background: 'var(--tint-2)',
               border: '1px solid var(--border-subtle)'
             }}
             id="btn-fetch-more-rest"

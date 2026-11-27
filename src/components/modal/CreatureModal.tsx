@@ -83,7 +83,7 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
       aria-labelledby="modal-creature-title"
     >
       <div
-        className="brutalist-modal"
+        className="brutalist-modal topo-surface"
         onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}
         style={{
           width: '100%',
@@ -106,7 +106,7 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
           justifyContent: 'space-between',
           padding: '20px 24px',
           borderBottom: '1px solid var(--border-subtle)',
-          background: 'linear-gradient(to right, rgba(255,255,255,0.03) 0%, transparent 100%)'
+          background: 'linear-gradient(to right, var(--tint-1) 0%, transparent 100%)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <img
@@ -183,12 +183,12 @@ export function CreatureModal({ creature, initialTab = 'overview', onClose }: Cr
         </div>
 
         {/* Modal Navigation Tabs (Subtle Buttons: Icons with Label Text) */}
-        <div style={{
+        <div className="ink-surface" style={{
           display: 'flex',
           gap: '8px',
           borderBottom: '1.5px solid var(--brutalist-border)',
           padding: '10px 24px',
-          background: '#090A0D',
+          background: 'var(--ink-deep)',
           overflowX: 'auto',
           scrollbarWidth: 'none'
         }}>
